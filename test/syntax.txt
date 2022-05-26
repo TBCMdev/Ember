@@ -1,0 +1,18 @@
+-VARIABLES-
+
+int i = 0
+
+
+-CONST-
+int: fixed i = 0
+i = 4 // error
+
+
+
+
+-REF-
+int: fixed x = 44
+int: ref i = x
+
+print(i) // error
+print(#i) //! dereference op: #

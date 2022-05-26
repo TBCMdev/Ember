@@ -1,0 +1,2 @@
+int:fixed myint = 4
+string: fixed = "mystring that is fixed"
