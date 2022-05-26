@@ -1,0 +1,42 @@
+
+.vs/Marine/v17/Browse.VC.db
+.vs/Marine/v17/Browse.VC.db-shm
+.vs/Marine/v17/Browse.VC.db-wal
+.vs/Marine/v17/Browse.VC.opendb
+.vs/Marine/v17/ipch/AutoPCH/55b3036d460b3809/MARINE [BETA].ipch
+.vs/Marine/v17/ipch/AutoPCH/d58cd467ef97577c/MARINE [BETA].ipch
+.vs/ProjectSettings.json
+.vs/slnx.sqlite
+.vs/VSWorkspaceState.json
+Debug/Marine [Beta].tlog/CL.command.1.tlog
+Debug/Marine [Beta].tlog/Marine [Beta].lastbuildstate
+Debug/Marine [Beta].tlog/unsuccessfulbuild
+Debug/vc143.idb
+Debug/vc143.pdb
+Marine.sln
+Marine.vcxproj
+Marine.vcxproj.filters
+Marine.vcxproj.user
+x64/Debug/marine [beta].obj.enc
+x64/Debug/Marine.exe
+x64/Debug/Marine.exe.recipe
+x64/Debug/Marine.ilk
+x64/Debug/Marine.log
+x64/Debug/Marine.pdb
+x64/Debug/Marine.tlog/CL.command.1.tlog
+x64/Debug/Marine.tlog/CL.read.1.tlog
+x64/Debug/Marine.tlog/CL.write.1.tlog
+x64/Debug/Marine.tlog/link.command.1.tlog
+x64/Debug/Marine.tlog/link.read.1.tlog
+x64/Debug/Marine.tlog/link.write.1.tlog
+x64/Debug/Marine.tlog/Marine.lastbuildstate
+x64/Debug/Marine.vcxproj.FileListAbsolute.txt
+.vs/Marine/v17/ipch/AutoPCH/55b3036d460b3809/MARINE [BETA].ipch
+.vs/Marine/v17/ipch/AutoPCH/d58cd467ef97577c/MARINE [BETA].ipch
+Debug/Marine [Beta].tlog/CL.command.1.tlog
+Debug/Marine [Beta].tlog/Marine [Beta].lastbuildstate
+Debug/Marine [Beta].tlog/unsuccessfulbuild
+x64/Debug/marine [beta].obj.enc
+*.ipch
+*.tlog
+*.enc
