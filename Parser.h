@@ -4,6 +4,9 @@
 #include <variant>
 #include <any>
 
+#include "Math.h"
+
+
 namespace marine {
 #pragma region helpers
 	static bool isOp(lexertk::token& t) {
@@ -39,68 +42,6 @@ namespace marine {
 	}
 #pragma endregion
 
-
-
-
-	struct Operator 
-	{
-		enum class OPTYPE {
-			//- ARITHMATIC -  
-			ADD,
-			SUB,
-			DIV,
-			MULT,
-			MOD,
-			ADD_S,
-			SUB_S,
-			DIV_S,
-			MULT_S,
-			MOD_S,
-			//- LOGICAL - 
-			ASSIGN,
-			EQUALS,
-			NOTEQ,
-			LTHAN,
-			GTHAN,
-			THOEQ,
-			GTOEQ,
-			//- UNKNOWN? -
-			UNKNWN
-		};
-	protected:
-		OPTYPE type;
-		std::string x = "";
-	public:
-		Operator(lexertk::token& t, bool th = true) {
-			if (t.value == "+") type = OPTYPE::ADD;
-			else if (t.value == "+") type = OPTYPE::ADD;
-			else if (t.value == "-") type = OPTYPE::SUB;
-			else if (t.value == "*") type = OPTYPE::MULT;
-			else if (t.value == "/") type = OPTYPE::DIV;
-			else if (t.value == "%") type = OPTYPE::MOD;
-			else if (t.value == "+=") type = OPTYPE::ADD_S;
-			else if (t.value == "-=") type = OPTYPE::SUB_S;
-			else if (t.value == "*=") type = OPTYPE::MULT_S;
-			else if (t.value == "/=") type = OPTYPE::DIV_S;
-			else if (t.value == "%=") type = OPTYPE::MOD_S;
-			else if (t.value == "=") type = OPTYPE::ASSIGN;
-			else if (t.value == "==") type = OPTYPE::EQUALS;
-			else if (t.value == "!=") type = OPTYPE::NOTEQ;
-			else if (t.value == ">") type = OPTYPE::GTHAN;
-			else if (t.value == "<") type = OPTYPE::LTHAN;
-			else if (t.value == ">=") type = OPTYPE::GTOEQ;
-			else if (t.value == "<=") type = OPTYPE::THOEQ;
-			else {
-				//if (th) throw ("invalid syntax error: expected operator, not: '" + t.value + "'.");
-				type = OPTYPE::UNKNWN;
-			}
-			x = t.value;
-		}
-		std::string str() {
-			return x;
-		}
-		bool isValid() { return type == OPTYPE::UNKNWN; }
-	};
 	class Base {
 	public:
 		enum class Decl {
@@ -195,11 +136,35 @@ namespace marine {
 		std::any& setValue(std::any x) { value = x; return x; }
 		lexertk::token& getToken() { return orig; }
 		std::string str() {
-			std::string ret("[var] name: " + name + ", val=" + orig.value + ", decl_type: " + Base::declStr(decl) + ", configurations: " + configsStr());
-			return ret;
+			return std::string("[var] name: " + name + ", val=" + orig.value + ", decl_type: " + Base::declStr(decl) + ", configurations: " + configsStr());
 		}
 	};
-	
+	class MathEvaluator {
+	protected:
+		lexertk::generator& generator;
+	public:
+		MathEvaluator(lexertk::generator& gen) : generator(gen) {}
+		template<typename Type>
+		void evalLeft() {
+
+		}
+		template<typename Type>
+		void evaluate(unsigned int start, unsigned int stop,Type& t) {
+			if (stop < start) return;
+			if (start > generator.size() || stop > generator.size()) return;
+
+			int level = 0;
+
+			while (i < stop) {
+				if (Base::is(gen[i], "(")) {
+					level++;
+					Type t;
+					evaluate(i + 1, stop, t);
+
+				}
+			}
+		}
+	};
 	class Parser {
 	protected:
 		lexertk::generator& gen;
@@ -216,7 +181,21 @@ namespace marine {
 		bool isFuncCall() {
 			//just do print for now
 			if (cur().value == "print") return true;
+			
+			if (Base::is(getNext(), "(")) {
+				int br = 1;
+				for (int i = index; i < gen.size(); i++) {
+					lexertk::token& t = gen[i];
+					if (Base::is(t, "(")) br++;
+					if (Base::is(t, ")")) br--;
+					if(br == 0) break;
+				}
+				if (br != 0) throw ("expected '(' after function call.");
+				return true;
+			}
 			return false;
+		}
+		void parseArithmatic() {
 		}
 		void parseDecl() {
 			Base::Decl type = Base::declareParse(cur());
