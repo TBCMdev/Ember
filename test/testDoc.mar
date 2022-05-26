@@ -1,2 +1,5 @@
 int:fixed myint = 4
-string: fixed = "mystring that is fixed"
+string:fixed,ref x = "mystring that is fixed"
+
+
+print(x)

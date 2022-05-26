@@ -126,6 +126,20 @@ namespace marine {
 				return "NULL";
 			}
 		}
+		const static const char* declStr(Decl& x) {
+			switch (x) {
+			case Decl::INT:
+				return "int";
+			case Decl::FLOAT:
+				return "float";
+			case Decl::STRING:
+				return "string";
+			case Decl::CUSTOM:
+				return "custom";
+			default:
+				return "unknown";
+			}
+		}
 		const static DeclConfig declCParse(lexertk::token& t) {
 			if (t.value == "fixed") return DeclConfig::FIXED;
 			else if (t.value == "ref") return DeclConfig::REF;
@@ -144,17 +158,27 @@ namespace marine {
 	class Variable{
 	protected:
 		std::any& value;
-		std::string& name;
-		lexertk::token& orig;
-		Base::Decl decl;
+		std::string name;
+		lexertk::token orig;
+		Base::Decl decl = Base::Decl::UNKNWN;
 		std::vector <Base::DeclConfig> configs;
+		std::string configsStr() {
+			std::stringstream stream;
+			stream << "[";
+
+			for (int i = 0; i < configs.size(); i++) {
+				stream << Base::declCStr(configs[i]);
+				if (i + 1 < configs.size()) stream << ", ";
+			}
+			return stream.str() + "]";
+		}
 	public:
-		Variable(std::string& _name, std::any val,lexertk::token& _orig, std::vector <Base::DeclConfig> _configs): orig(_orig), value(val), name(_name), configs(_configs)
+		Variable(std::string& _name,std::any val,lexertk::token& _orig, std::vector <Base::DeclConfig> _configs): orig(_orig), value(val), name(_name), configs(_configs)
 		{
-			
 		}
 		void setDecl(Base::Decl d) { decl = d; }
 		std::any getValue() { return value; }
+		std::string& getName() { return name; }
 		template <typename T>
 		T castValue() {
 			if (std::count(configs.begin(), configs.end(), Base::DeclConfig::FIXED) != 0 && std::count(configs.begin(), configs.end(), Base::DeclConfig::REF) != 0) {
@@ -171,13 +195,8 @@ namespace marine {
 		std::any& setValue(std::any x) { value = x; return x; }
 		lexertk::token& getToken() { return orig; }
 		std::string str() {
-			try {
-				return std::string("[var] " + name + ", val: '" + orig.value + "'");
-			}
-			catch (std::exception& e) {
-				std::cout << e.what();
-				return "null";
-			}
+			std::string ret("[var] name: " + name + ", val=" + orig.value + ", decl_type: " + Base::declStr(decl) + ", configurations: " + configsStr());
+			return ret;
 		}
 	};
 	
@@ -185,7 +204,7 @@ namespace marine {
 	protected:
 		lexertk::generator& gen;
 		lexertk::token current;
-		std::vector<Variable*> core_variables;
+		std::vector<Variable> core_variables;
 		int index = -1;
 	public:
 		Parser(lexertk::generator& generator): gen(generator) {}
@@ -193,6 +212,11 @@ namespace marine {
 
 		bool isDecl() {
 			return Base::declareParse(cur()) != Base::Decl::UNKNWN;
+		}
+		bool isFuncCall() {
+			//just do print for now
+			if (cur().value == "print") return true;
+			return false;
 		}
 		void parseDecl() {
 			Base::Decl type = Base::declareParse(cur());
@@ -204,9 +228,6 @@ namespace marine {
 						conf.push_back(Base::declCParse(advance(2)));
 						if (!Base::is(getNext(), ",")) break;
 					}
-					for (auto& x : conf) {
-						std::cout << "FOUND CONFIG:" << Base::declCStr(x) << std::endl;
-					}
 					if (conf.size() == 0) throw "no config state was supplied after ':'";
 				}
 				lexertk::token& decl_name = advance();
@@ -214,22 +235,21 @@ namespace marine {
 					//IT IS VARIABLE
 					//just handle numbers for now
 					if (isInt(getNext())) {
-						std::cout << "cur:" << cur().value;
-						Variable v(decl_name.value, std::stoi(advance().value), advance(), conf);
+						Variable v(decl_name.value, std::stoi(advance().value), cur(), conf);
 						v.setDecl(Base::Decl::INT);
-						core_variables.push_back(&v);
+						core_variables.push_back(v);
 						return;
 					}
 					else if (isFloat(getNext())) {
-						Variable v(decl_name.value, std::stoi(advance().value), advance(), conf);
+						Variable v(decl_name.value, std::stof(advance().value), cur(), conf);
 						v.setDecl(Base::Decl::FLOAT);
-						core_variables.push_back(&v);
+						core_variables.push_back(v);
 						return;
 					}
 					else {
-						Variable v(decl_name.value, std::stoi(advance().value), advance(), conf);
+						Variable v(decl_name.value, advance().value, cur(), conf);
 						v.setDecl(Base::Decl::STRING);
-						core_variables.push_back(&v);
+						core_variables.push_back(v);
 						return;
 					}
 				}
@@ -239,7 +259,23 @@ namespace marine {
 
 			}
 		}
-
+		void parseFuncCall() {
+			//MOCK CODE
+			if (cur().value == "print") {
+				if (advance().value == "(") {
+					Variable* v = nullptr;
+					advance();
+					for (int i = 0; i < core_variables.size(); i++) {
+						if (core_variables[i].getName() == cur().value) {
+							v = &core_variables[i];
+							break;
+						}
+					}
+					advance();
+					std::cout << v->getToken().value << std::endl;
+				}
+			}
+		}
 #pragma endregion
 		void parse() {
 			advance();
@@ -247,11 +283,14 @@ namespace marine {
 				if (isDecl()) {
 					parseDecl();
 				}
+				else if (isFuncCall()) {
+					parseFuncCall();
+				}
 
 				advance();
 			}
-			for (const auto& x : core_variables) {
-				std::cout << x->str() << std::endl; 
+			for (auto& x : core_variables) {
+				std::cout << x.str() << std::endl; 
 			}
 		}
 		lexertk::token& cur() {
