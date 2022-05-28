@@ -5,7 +5,7 @@
 #include <any>
 
 #include "Math.h"
-
+#include "MError.h"
 
 namespace marine {
 #pragma region helpers
@@ -184,7 +184,7 @@ namespace marine {
 					if (Base::is(t, ")")) br--;
 					if(br == 0) break;
 				}
-				if (br != 0) throw ("expected '(' after function call.");
+				if (br != 0) throw errors::SyntaxError("expected '(' after function call.");
 				return true;
 			}
 			return false;
@@ -201,7 +201,7 @@ namespace marine {
 						conf.push_back(Base::declCParse(advance(2)));
 						if (!Base::is(getNext(), ",")) break;
 					}
-					if (conf.size() == 0) throw "no config state was supplied after ':'";
+					if (conf.size() == 0) throw errors::SyntaxError("no config state was supplied after ':'");
 				}
 				lexertk::token& decl_name = advance();
 				if (Base::is(advance(), "=")) {
