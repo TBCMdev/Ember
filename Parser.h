@@ -118,20 +118,14 @@ namespace marine {
 		{
 		}
 		void setDecl(Base::Decl d) { decl = d; }
-		std::any getValue() { return value; }
+		std::any& getValue() { return value; }
 		std::string& getName() { return name; }
 		template <typename T>
-		T castValue() {
-			if (std::count(configs.begin(), configs.end(), Base::DeclConfig::FIXED) != 0 && std::count(configs.begin(), configs.end(), Base::DeclConfig::REF) != 0) {
-				return std::any_cast<const T*> (value);
-			}
-			else if (std::count(configs.begin(), configs.end(), Base::DeclConfig::FIXED) != 0) {
-				return std::any_cast<const T> (value);
-			}
-			else if (std::count(configs.begin(), configs.end(), Base::DeclConfig::REF) != 0) {
-				return std::any_cast<T*> (value);
-			}
+		T cast() {
 			return std::any_cast<T>(value);
+		}
+		bool is(Base::DeclConfig d) {
+			return std::count(configs.begin(), configs.end(), d) != 0;
 		}
 		std::any& setValue(std::any x) { value = x; return x; }
 		lexertk::token& getToken() { return orig; }
@@ -255,6 +249,11 @@ namespace marine {
 				}
 			}
 		}
+		bool isVariableUsage() {
+
+		}
+		void parseVariableUsage() {
+		}
 #pragma endregion
 		void parse() {
 			advance();
@@ -264,6 +263,9 @@ namespace marine {
 				}
 				else if (isFuncCall()) {
 					parseFuncCall();
+				}
+				else if (isVariableUsage()) {
+					parseVariableUsage();
 				}
 
 				advance();

@@ -16,3 +16,36 @@ int: ref i = x
 
 print(i) // error
 print(#i) //! dereference op: #
+
+
+
+
+
+
+
+
+-KEYWORDS-
+null
+nullref
+default
+
+class myClass{
+	default(){
+		return new myClass(0, 5, "className")
+	}
+	//declares a static function
+	void:static myStaticFunction(int:ref myintref){
+		myintref += 5
+		
+	}
+
+}
+int __func()
+{
+	myClass m = default //sets refint to a default value provided by the type
+	m = null
+
+	m.doSomething() //is null, but will only cause warning, function will not be called
+	m = nullref //will throw error, a variable that is not a refrence cannot be nullref
+
+}
