@@ -15,11 +15,13 @@ namespace marine {
 			t.value == "*" ||
 			t.value == "/" ||
 			t.value == "%" ||
-			t.value == "+="||
-			t.value == "-="||
-			t.value == "*="||
-			t.value == "/="||
-			t.value == "%=") return true;
+			t.value == "+=" ||
+			t.value == "-=" ||
+			t.value == "*=" ||
+			t.value == "/=" ||
+			t.value == "%=" ||
+			t.value == "(" ||
+			t.value == ")") return true;
 		else {
 			return false;
 		}

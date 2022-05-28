@@ -1,8 +1,29 @@
 #pragma once
 #include <iostream>
 #include <string>
-
-struct Operator
+#include "Parser.h"
+class Node {
+protected:
+	lexertk::token& t;
+public:
+	Node(lexertk::token& to): t(to){}
+	lexertk::token& getToken() { return t; }
+	static int precedence(Node& o) {
+		if (marine::Base::is(o.getToken(), "(") ||
+		marine::Base::is(o.getToken(), ")")) return 1;
+		if (marine::Base::is(o.getToken(), "*") || marine::Base::is(o.getToken(), "/") || marine::Base::is(o.getToken(), "%")) return 2;
+		if (marine::Base::is(o.getToken(), "+") || marine::Base::is(o.getToken(), "-"))  return 3;
+		return -1;
+	}
+	static int precedence(lexertk::token& o) {
+		if (o.value == "(" ||
+			o.value == ")") return 1;
+		if (o.value == "*" || o.value == "/" || o.value == "%") return 2;
+		if (o.value == "+" || o.value == "-")  return 3;
+		return -1;
+	}
+};
+struct Operator: public Node
 {
 	enum class OPTYPE {
 		//- ARITHMATIC -  
@@ -24,6 +45,11 @@ struct Operator
 		GTHAN,
 		THOEQ,
 		GTOEQ,
+		
+
+		//-BRACKETS-
+		LPR,
+		RPR,
 		//- UNKNOWN? -
 		UNKNWN
 	};
@@ -31,7 +57,7 @@ protected:
 	OPTYPE type;
 	std::string x = "";
 public:
-	Operator(lexertk::token& t, bool th = true) {
+	Operator(lexertk::token& t, bool th = true): Node(t) {
 		if (t.value == "+") type = OPTYPE::ADD;
 		else if (t.value == "+") type = OPTYPE::ADD;
 		else if (t.value == "-") type = OPTYPE::SUB;
@@ -50,6 +76,8 @@ public:
 		else if (t.value == "<") type = OPTYPE::LTHAN;
 		else if (t.value == ">=") type = OPTYPE::GTOEQ;
 		else if (t.value == "<=") type = OPTYPE::THOEQ;
+		else if (t.value == "(") type = OPTYPE::LPR;
+		else if(t.value == ")") type = OPTYPE::RPR;
 		else {
 			//if (th) throw ("invalid syntax error: expected operator, not: '" + t.value + "'.");
 			type = OPTYPE::UNKNWN;
@@ -59,22 +87,48 @@ public:
 	std::string str() {
 		return x;
 	}
-	bool isValid() { return type == OPTYPE::UNKNWN; }
+	bool isValid() { return type != OPTYPE::UNKNWN; }
+	
 };
-
-class Exp {
-	virtual void done() {}
-};
-class Node: public Exp {
-	Exp* left, * right;
-	Operator op;
+class BinOpNode: public Node {
+	Node* left = nullptr, * right = nullptr;
+	Operator* op = nullptr;
 public:
-	Node(Operator _op, Exp* _left, Exp* _right) : left(_left), right(_right), op(_op) {
+	BinOpNode(Node& n): left(&n), Node(n.getToken()) {
+		
+	}
+	BinOpNode(Node& left, Operator& _op, Node& right) : left(&left), right(&right), op(&_op) {
 
 	}
-	void done() {
-		delete left;
-		delete right;
-		delete &op;
+	bool hasLeft() { return left != nullptr; }
+	bool hasOperator() { return op != nullptr; }
+	bool hasRight() { return right != nullptr; }
+};
+class EtcParser {
+	static void parse(marine::Parser & p) {
+		std::vector<Node> exprStack;
+		std::vector<Operator> opStack;
+		while (p.canAdvance()) {
+			if (marine::isInt(p.cur()) || marine::isFloat(p.cur())) {
+				exprStack.push_back(Node(p.cur()));
+			}
+			else if (p.cur().value == "(") {
+				opStack.push_back(Operator(p.cur()));
+			}
+			else if (marine::isOp(p.cur())) {
+				while (Node::precedence(opStack.back()) != -1 && Node::precedence(opStack.back()) >= Node::precedence(p.cur())) {
+					Operator& n = opStack.back();
+					opStack.pop_back();
+
+					Node& e1 = exprStack.back();
+					exprStack.pop_back();
+					Node& e2 = exprStack.back();
+					exprStack.pop_back();
+					exprStack.push_back(BinOpNode(e1, n, e2));
+				}
+				opStack.pop_back();
+			}
+			else throw ("unexpected unexplainable error occured.")
+		}
 	}
 };
