@@ -96,7 +96,7 @@ namespace marine {
 			return t.value == x;
 		}
 	};
-	class Variable{
+	class Variable {
 	protected:
 		std::any& value;
 		std::string name;
@@ -114,7 +114,7 @@ namespace marine {
 			return stream.str() + "]";
 		}
 	public:
-		Variable(std::string& _name,std::any val,lexertk::token& _orig, std::vector <Base::DeclConfig> _configs): orig(_orig), value(val), name(_name), configs(_configs)
+		Variable(std::string& _name, std::any val, lexertk::token& _orig, std::vector <Base::DeclConfig> _configs) : orig(_orig), value(val), name(_name), configs(_configs)
 		{
 		}
 		void setDecl(Base::Decl d) { decl = d; }
@@ -140,7 +140,7 @@ namespace marine {
 		std::vector<Variable> core_variables;
 		int index = -1;
 	public:
-		Parser(lexertk::generator& generator): gen(generator) {}
+		Parser(lexertk::generator& generator) : gen(generator) {}
 #pragma region decl
 
 		bool isDecl() {
@@ -149,14 +149,14 @@ namespace marine {
 		bool isFuncCall() {
 			//just do print for now
 			if (cur().value == "print") return true;
-			
+
 			if (Base::is(getNext(), "(")) {
 				int br = 1;
 				for (int i = index; i < gen.size(); i++) {
 					lexertk::token& t = gen[i];
 					if (Base::is(t, "(")) br++;
 					if (Base::is(t, ")")) br--;
-					if(br == 0) break;
+					if (br == 0) break;
 				}
 				if (br != 0) return false;//throw errors::SyntaxError("expected '(' after function call.");
 				return true;
@@ -190,23 +190,23 @@ namespace marine {
 				}
 				else if (marine::isOp(cur())) {
 					std::cout << "isOp:" << cur().value << std::endl;
-					if (opStack.size() > 0) {
-						while (ext::Node::precedence(opStack.back()) != -1 && ext::Node::precedence(opStack.back()) >= ext::Node::precedence(cur())) {
-							ext::Operator n = opStack.back();
-							opStack.pop_back();
+					while (ext::Node::precedence(opStack.back()) != -1 && ext::Node::precedence(opStack.back()) >= ext::Node::precedence(cur())
+						&& opStack.size() > 0 && exprStack.size() > 2) {
+						ext::Operator n = opStack.back();
+						opStack.pop_back();
 
-							ext::Node e2 = exprStack.back();
-							exprStack.pop_back();
-							ext::Node e1 = exprStack.back();
-							exprStack.pop_back();
-							exprStack.push_back(ext::BinOpNode(e1, n, e2));
-						}
+						ext::Node e2 = exprStack.back();
+						exprStack.pop_back();
+						ext::Node e1 = exprStack.back();
+						exprStack.pop_back();
+						exprStack.push_back(ext::BinOpNode(e1, n, e2));
 					}
 					opStack.push_back(marine::ext::Operator(cur()));
 				}
 				else if (cur().value == ")") {
 				end:
 					br--;
+
 					while (opStack.back().get().value != "(") {
 						ext::Operator o = opStack.back();
 						opStack.pop_back();
@@ -308,7 +308,7 @@ namespace marine {
 				advance();
 			}
 			for (auto& x : core_variables) {
-				std::cout << x.str() << std::endl; 
+				std::cout << x.str() << std::endl;
 			}
 		}
 		lexertk::token& cur() {
@@ -323,7 +323,7 @@ namespace marine {
 		}
 		lexertk::token& advance(unsigned int x) {
 			if (!canAdvance(x)) return current;
-			index+=x;
+			index += x;
 			current = gen[index];
 			return gen[index];
 
