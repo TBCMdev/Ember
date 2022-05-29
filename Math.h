@@ -5,8 +5,13 @@
 class Node {
 protected:
 	lexertk::token& t;
+	lexertk::token* right = nullptr;
+	Operator* oper = nullptr;
 public:
 	Node(lexertk::token& to): t(to){}
+	Node(lexertk::token& to, lexertk::token* _r, Operator* op): t(to), right(_r), oper(op) {
+
+	}
 	lexertk::token& getToken() { return t; }
 	static int precedence(Node& o) {
 		if (marine::Base::is(o.getToken(), "(") ||
@@ -97,7 +102,7 @@ public:
 	BinOpNode(Node& n): left(&n), Node(n.getToken()) {
 		
 	}
-	BinOpNode(Node& left, Operator& _op, Node& right) : left(&left), right(&right), op(&_op) {
+	BinOpNode(Node& left, Operator& _op, Node& right) : left(&left), right(&right), op(&_op), Node(left.getToken(), &right.getToken(), &op) {
 
 	}
 	bool hasLeft() { return left != nullptr; }
@@ -128,7 +133,7 @@ class EtcParser {
 				}
 				opStack.pop_back();
 			}
-			else throw ("unexpected unexplainable error occured.")
+			else throw ("unexpected unexplainable error occured.");
 		}
 	}
 };
