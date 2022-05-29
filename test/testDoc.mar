@@ -1,5 +1,1 @@
-int:fixed myint = 4
-string x = "mystring that is fixed"
-
-
-print(x)
+int:fixed myint = 4 + 2 + (17 /2)

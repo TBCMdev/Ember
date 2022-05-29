@@ -1,4 +1,5 @@
 ﻿  Marine [Beta].cpp
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(119,16): warning C4114: same type qualifier used more than once
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(128): warning C4715: 'marine::Base::declCStr': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(60,16): warning C4114: same type qualifier used more than once
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(70,16): warning C4114: same type qualifier used more than once
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(69): warning C4715: 'marine::Base::declCStr': not all control paths return a value
   Marine [Beta].vcxproj -> C:\Users\krist\source\repos\Marine [Beta]\x64\Debug\Marine [Beta].exe

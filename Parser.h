@@ -19,9 +19,7 @@ namespace marine {
 			t.value == "-=" ||
 			t.value == "*=" ||
 			t.value == "/=" ||
-			t.value == "%=" ||
-			t.value == "(" ||
-			t.value == ")") return true;
+			t.value == "%=") return true;
 		else {
 			return false;
 		}
@@ -135,32 +133,6 @@ namespace marine {
 			return std::string("[var] name: " + name + ", val=" + orig.value + ", decl_type: " + Base::declStr(decl) + ", configurations: " + configsStr());
 		}
 	};
-	class MathEvaluator {
-	protected:
-		lexertk::generator& generator;
-	public:
-		MathEvaluator(lexertk::generator& gen) : generator(gen) {}
-		template<typename Type>
-		void evalLeft() {
-
-		}
-		template<typename Type>
-		void evaluate(unsigned int start, unsigned int stop,Type& t) {
-			if (stop < start) return;
-			if (start > generator.size() || stop > generator.size()) return;
-
-			int level = 0;
-
-			while (i < stop) {
-				if (Base::is(gen[i], "(")) {
-					level++;
-					Type t;
-					evaluate(i + 1, stop, t);
-
-				}
-			}
-		}
-	};
 	class Parser {
 	protected:
 		lexertk::generator& gen;
@@ -186,12 +158,73 @@ namespace marine {
 					if (Base::is(t, ")")) br--;
 					if(br == 0) break;
 				}
-				if (br != 0) throw errors::SyntaxError("expected '(' after function call.");
+				if (br != 0) return false;//throw errors::SyntaxError("expected '(' after function call.");
 				return true;
 			}
 			return false;
 		}
-		void parseArithmatic() {
+		void parseExt() {
+			advance();
+			std::cout << "parsing ext at:" << cur().value << std::endl;
+			std::vector<ext::Node> exprStack;
+			std::vector<ext::Operator> opStack;
+			bool hasBr = false;
+			int br = 0;
+			while (canAdvance()) {
+				if (br == 1 && Base::is(getNext(), ")")) {
+					advance();
+					goto end;
+				}
+				if ((marine::isInt(getNext()) || marine::isFloat(getNext())) && !isOp(getNext(2))) {
+					advance();
+					break;
+				}
+				if (marine::isInt(cur()) || marine::isFloat(cur())) {
+					std::cout << "pushing:" << cur().value << std::endl;
+					exprStack.push_back(ext::Node(cur()));
+				}
+				else if (cur().value == "(") {
+					br++;
+					if (!hasBr) hasBr = true;
+					opStack.push_back(ext::Operator(cur()));
+				}
+				else if (marine::isOp(cur())) {
+					std::cout << "isOp:" << cur().value << std::endl;
+					if (opStack.size() > 0) {
+						while (ext::Node::precedence(opStack.back()) != -1 && ext::Node::precedence(opStack.back()) >= ext::Node::precedence(cur())) {
+							ext::Operator n = opStack.back();
+							opStack.pop_back();
+
+							ext::Node e2 = exprStack.back();
+							exprStack.pop_back();
+							ext::Node e1 = exprStack.back();
+							exprStack.pop_back();
+							exprStack.push_back(ext::BinOpNode(e1, n, e2));
+						}
+					}
+					opStack.push_back(marine::ext::Operator(cur()));
+				}
+				else if (cur().value == ")") {
+				end:
+					br--;
+					while (opStack.back().get().value != "(") {
+						ext::Operator o = opStack.back();
+						opStack.pop_back();
+
+						ext::Node e2 = exprStack.back();
+						exprStack.pop_back();
+						ext::Node e1 = exprStack.back();
+						exprStack.pop_back();
+						exprStack.push_back(ext::BinOpNode(e1, o, e2));
+
+					}
+					opStack.pop_back();
+				}
+				else throw ("unexpected unexplainable error occured.");
+				if (br == 0 && hasBr) break;
+				advance();
+			}
+			std::cout << exprStack.back().repr();
 		}
 		void parseDecl() {
 			Base::Decl type = Base::declareParse(cur());
@@ -209,6 +242,7 @@ namespace marine {
 				if (Base::is(advance(), "=")) {
 					//IT IS VARIABLE
 					//just handle numbers for now
+					parseExt();
 					if (isInt(getNext())) {
 						Variable v(decl_name.value, std::stoi(advance().value), cur(), conf);
 						v.setDecl(Base::Decl::INT);
@@ -247,12 +281,13 @@ namespace marine {
 						}
 					}
 					advance();
+					if (v == nullptr) return;
 					std::cout << v->getToken().value << std::endl;
 				}
 			}
 		}
 		bool isVariableUsage() {
-
+			return false;
 		}
 		void parseVariableUsage() {
 		}
