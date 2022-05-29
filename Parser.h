@@ -163,7 +163,8 @@ namespace marine {
 			}
 			return false;
 		}
-		void parseExt() {
+		template<typename Type>
+		Type parseExt() {
 			advance();
 			std::cout << "parsing ext at:" << cur().value << std::endl;
 			std::vector<ext::Node> exprStack;
@@ -175,23 +176,25 @@ namespace marine {
 					advance();
 					goto end;
 				}
-				if ((marine::isInt(getNext()) || marine::isFloat(getNext())) && !isOp(getNext(2))) {
+				/*if ((marine::isInt(getNext()) || marine::isFloat(getNext())) && !isOp(getNext(2))) {
 					advance();
-					break;
-				}
+					continue;
+				}*/
 				if (marine::isInt(cur()) || marine::isFloat(cur())) {
 					std::cout << "pushing:" << cur().value << std::endl;
 					exprStack.push_back(ext::Node(cur()));
 				}
 				else if (cur().value == "(") {
+					std::cout << "found open br" << std::endl;
 					br++;
 					if (!hasBr) hasBr = true;
 					opStack.push_back(ext::Operator(cur()));
 				}
 				else if (marine::isOp(cur())) {
 					std::cout << "isOp:" << cur().value << std::endl;
-					while (ext::Node::precedence(opStack.back()) != -1 && ext::Node::precedence(opStack.back()) >= ext::Node::precedence(cur())
-						&& opStack.size() > 0 && exprStack.size() > 2) {
+					while ((opStack.size() > 0 && exprStack.size() > 1) && ext::Node::precedence(opStack.back()) != -1 && ext::Node::precedence(opStack.back()) >= ext::Node::precedence(cur()))
+					{
+						std::cout << "op count:" << opStack.size() << "\nexpr count:" << exprStack.size() << std::endl;
 						ext::Operator n = opStack.back();
 						opStack.pop_back();
 
@@ -199,15 +202,16 @@ namespace marine {
 						exprStack.pop_back();
 						ext::Node e1 = exprStack.back();
 						exprStack.pop_back();
-						exprStack.push_back(ext::BinOpNode(e1, n, e2));
+						std::cout << "creating node: e2: " << e2.repr() << "\ne1:" << e1.repr() << "oper:" << n.str() << std::endl;
+						exprStack.push_back(ext::Node(e1, n, e2));
 					}
 					opStack.push_back(marine::ext::Operator(cur()));
 				}
 				else if (cur().value == ")") {
 				end:
+					std::cout << "closing";
 					br--;
-
-					while (opStack.back().get().value != "(") {
+					while ((opStack.size() > 0 && exprStack.size() > 1) && opStack.back().get().value != "(") {
 						ext::Operator o = opStack.back();
 						opStack.pop_back();
 
@@ -215,16 +219,21 @@ namespace marine {
 						exprStack.pop_back();
 						ext::Node e1 = exprStack.back();
 						exprStack.pop_back();
-						exprStack.push_back(ext::BinOpNode(e1, o, e2));
+						exprStack.push_back(ext::Node(e1, o, e2));
 
 					}
-					opStack.pop_back();
+					if (opStack.size() > 0) {
+						opStack.pop_back();
+					}
 				}
 				else throw ("unexpected unexplainable error occured.");
-				if (br == 0 && hasBr) break;
+				if (br == 0 && hasBr) { advance();  break; }
 				advance();
 			}
-			std::cout << exprStack.back().repr();
+			for (auto& x : exprStack) {
+				std::cout << x.repr() << std::endl;
+			}
+
 		}
 		void parseDecl() {
 			Base::Decl type = Base::declareParse(cur());
@@ -242,7 +251,16 @@ namespace marine {
 				if (Base::is(advance(), "=")) {
 					//IT IS VARIABLE
 					//just handle numbers for now
-					parseExt();
+					switch (type) {
+					case Base::Decl::INT:
+						parseExt<int>();
+					case Base::Decl::FLOAT:
+						parseExt<float>();
+					case Base::Decl::STRING:
+						parseExt <std::string>();
+						//case Base::Decl::CUSTOM:
+							//parseExt<std::any>();
+					}
 					if (isInt(getNext())) {
 						Variable v(decl_name.value, std::stoi(advance().value), cur(), conf);
 						v.setDecl(Base::Decl::INT);

@@ -71,14 +71,16 @@ namespace marine {
 			bool isValid() { return type != OPTYPE::UNKNWN; }
 			lexertk::token& get() { return _t; }
 		};
+		class Node;
 		class Node {
 		protected:
-			lexertk::token& t;
-			lexertk::token* right = nullptr;
+			lexertk::token t;
+			Node* left = nullptr;
+			Node* right = nullptr;
 			Operator* oper = nullptr;
 		public:
-			Node(lexertk::token& to) : t(to) {}
-			Node(lexertk::token& to, lexertk::token* _r, Operator* op) : t(to), right(_r), oper(op) {
+			Node(lexertk::token to) : t(to) {}
+			Node(Node left, Operator _op, Node right) : left(&left), right(&right), oper(&_op) {
 
 			}
 			lexertk::token& getToken() { return t; }
@@ -104,29 +106,14 @@ namespace marine {
 				return -1;
 			}
 			std::string repr() {
-				if (right != nullptr) {
+				if (right != nullptr && left != nullptr) {
 					if (oper != nullptr) {
-						return std::string("left: " + t.value + "right:" + right->value + ", operator: " + oper->str());
+						return std::string("left: " + left->getToken().value + "right:" + right->getToken().value + ", operator: " + oper->str());
 					}
-					return std::string("left: " + t.value + "right:" + right->value);
+					return std::string("left: " + left->getToken().value + "right:" + right->getToken().value);
 				}
-				return std::string("left: " + t.value);
+				return std::string("val: " + t.value);
 			}
-		};
-		
-		class BinOpNode : public Node {
-			Node* left = nullptr, * right = nullptr;
-			Operator* op = nullptr;
-		public:
-			BinOpNode(Node& n) : left(&n), Node(n.getToken()) {
-
-			}
-			BinOpNode(Node& left, Operator& _op, Node& right) : left(&left), right(&right), op(&_op), Node(left.getToken(), &right.getToken(), op) {
-
-			}
-			bool hasLeft() { return left != nullptr; }
-			bool hasOperator() { return op != nullptr; }
-			bool hasRight() { return right != nullptr; }
 		};
 		
 	};
