@@ -243,6 +243,7 @@ namespace lexertk
             value(""),
             position(std::numeric_limits<std::size_t>::max())
         {}
+        token(std::string s): type(e_string), value(s.c_str()), position(std::numeric_limits<std::size_t>::max()){}
         void clear()
         {
             type = e_none;

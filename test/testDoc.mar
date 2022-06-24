@@ -1,1 +1,2 @@
-int:fixed myint = 4 + 2 + (17 /2)
+int:fixed myint = 1 + 1 + 1 + 1 + 1
+

@@ -1,8 +1,11 @@
 #pragma once
 #include <iostream>
 #include <string>
+#include "Base.h"
+#include "MError.h"
 namespace marine {
 	namespace ext {
+		class Node;
 		struct Operator
 		{
 			enum class OPTYPE {
@@ -36,9 +39,10 @@ namespace marine {
 		protected:
 			OPTYPE type;
 			std::string x = "";
-			lexertk::token& _t;
+			lexertk::token _t;
 		public:
-			Operator(lexertk::token& t, bool th = true): _t(t) {
+			
+			Operator(lexertk::token t, bool th = true): _t(t) {
 				if (t.value == "+") type = OPTYPE::ADD;
 				else if (t.value == "+") type = OPTYPE::ADD;
 				else if (t.value == "-") type = OPTYPE::SUB;
@@ -71,19 +75,31 @@ namespace marine {
 			bool isValid() { return type != OPTYPE::UNKNWN; }
 			lexertk::token& get() { return _t; }
 		};
-		class Node;
 		class Node {
 		protected:
 			lexertk::token t;
-			Node* left = nullptr;
-			Node* right = nullptr;
-			Operator* oper = nullptr;
+			std::shared_ptr<Node> left = nullptr;
+			std::shared_ptr<Node> right = nullptr;
+			std::shared_ptr<Operator> oper = nullptr;
 		public:
-			Node(lexertk::token to) : t(to) {}
-			Node(Node left, Operator _op, Node right) : left(&left), right(&right), oper(&_op) {
+			Base::Decl type;
+			Node(lexertk::token to, Base::Decl decl) : t(to), type(decl) {}
+			Node(Node left, Operator _op, Node right) : left(new Node(left)), right(new Node(right)), oper(new Operator(_op)) {
+				
+				auto ltype = getRootNodeType(&left, true);
+				auto rtype = getRootNodeType(&right, false);
 
+				std::cout << "found left: " << Base::declStr(ltype) << "\nfound right:" << Base::declStr(rtype) << std::endl;
+
+				if (ltype != rtype) throw errors::MError("performing arithmatic on two types that are not supported is not allowed");
+
+				type = ltype;
 			}
-			lexertk::token& getToken() { return t; }
+			static Base::Decl getRootNodeType(Node* rec, bool l) {
+				if (rec->isSingular()) return Base::declLiteralParse(rec->getToken());
+				if (l) return getRootNodeType(rec->getLeft(), l);
+				else return getRootNodeType(rec->getRight(), l);
+			}
 			static int precedence(Node& o) {
 				if (o.getToken().value == "(" ||
 					o.getToken().value == ")") return 1;
@@ -105,16 +121,101 @@ namespace marine {
 				if (o.value == "+" || o.value == "-")  return 3;
 				return -1;
 			}
-			std::string repr() {
+			lexertk::token& getToken() { return t; }
+			Node* getLeft() { return left.get(); }
+			Node* getRight() { return right.get(); }
+			bool isSingular() {
+				return (left == nullptr && right == nullptr && oper == nullptr);
+			}
+			virtual std::string repr() {
 				if (right != nullptr && left != nullptr) {
 					if (oper != nullptr) {
-						return std::string("left: " + left->getToken().value + "right:" + right->getToken().value + ", operator: " + oper->str());
+						return std::string("left: (" + left->repr() + ") right: (" + right->repr() + ")" + ", operator: '" + oper->str() + "'");
 					}
-					return std::string("left: " + left->getToken().value + "right:" + right->getToken().value);
+					return std::string("left: (" + left->repr() + ") right: (" + right->repr() + ")");
 				}
 				return std::string("val: " + t.value);
 			}
+			std::any calc() {
+				if (left->isSingular()) {
+					auto op = oper->get().value;
+					if (right->isSingular()) {
+						switch (left->type) {
+						case Base::Decl::INT:
+							if (op == "+")
+								return stoi(left->getToken().value) + stoi(right->getToken().value);
+							else if(op == "-")
+								return stoi(left->getToken().value) - stoi(right->getToken().value);
+							else if(op == "*")
+								return stoi(left->getToken().value) * stoi(right->getToken().value);
+							else if(op == "/")
+								return stoi(left->getToken().value) / stoi(right->getToken().value);
+							else if(op == "%")
+								return stoi(left->getToken().value) % stoi(right->getToken().value);
+						case Base::Decl::FLOAT:
+							if (op == "+")
+								return stof(left->getToken().value) + stof(right->getToken().value);
+							else if (op == "-")
+								return stof(left->getToken().value) - stof(right->getToken().value);
+							else if (op == "*")
+								return stof(left->getToken().value) * stof(right->getToken().value);
+							else if (op == "/")
+								return stof(left->getToken().value) / stof(right->getToken().value);
+						case Base::Decl::STRING:
+							if (op == "+")
+								return left->getToken().value + right->getToken().value;
+							/*else if (op == "-")
+								return left->getToken().value - right->getToken().value;
+							else if (op == "*")
+								return stof(left->getToken().value) * stof(right->getToken().value);
+							else if (op == "/")
+								return stof(left->getToken().value) / stof(right->getToken().value);
+							else if (op == "%")
+								return stof(left->getToken().value) % stof(right->getToken().value);*/
+						default:
+							throw marine::errors::MError("something unexpected happened.");
+						}
+					}
+					switch (left->type) {
+					case Base::Decl::INT:
+						if (op == "+")
+							return stoi(left->getToken().value) + std::any_cast<int>(right->calc());
+						else if (op == "-")
+							return stoi(left->getToken().value) - std::any_cast<int>(right->calc());
+						else if (op == "*")
+							return stoi(left->getToken().value) * std::any_cast<int>(right->calc());
+						else if (op == "/")
+							return stoi(left->getToken().value) / std::any_cast<int>(right->calc());
+						else if (op == "%")
+							return stoi(left->getToken().value) % std::any_cast<int>(right->calc());
+					case Base::Decl::FLOAT:
+						if (op == "+")
+							return stof(left->getToken().value) + std::any_cast<float>(right->calc());
+						else if (op == "-")
+							return stof(left->getToken().value) - std::any_cast<float>(right->calc());
+						else if (op == "*")
+							return stof(left->getToken().value) * std::any_cast<float>(right->calc());
+						else if (op == "/")
+							return stof(left->getToken().value) / std::any_cast<float>(right->calc());
+					case Base::Decl::STRING:
+						return left->getToken().value + std::any_cast<std::string>(right->calc());
+					default:
+						throw marine::errors::MError("something unexpected happened.");
+					}
+				}
+				//LAST TODO
+				switch (left->type) {
+				case Base::Decl::INT:
+					return std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc());
+				case Base::Decl::FLOAT:
+					return std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc());
+				case Base::Decl::STRING:
+					return std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc());
+				default:
+					throw errors::MError("something unexpected happened.");
+				}
+				return NULL;
+			}
 		};
-		
 	};
 };

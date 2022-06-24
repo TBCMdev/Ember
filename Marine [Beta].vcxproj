@@ -143,6 +143,8 @@
     <ClCompile Include="Marine [Beta].cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Base.h" />
+    <ClInclude Include="helpers.h" />
     <ClInclude Include="lexertk.hpp" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="MError.h" />

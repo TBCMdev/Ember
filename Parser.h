@@ -3,99 +3,27 @@
 #include <vector>
 #include <variant>
 #include <any>
-
+#include <functional>
 #include "Math.h"
 #include "MError.h"
-
+#include "Base.h"
+#include "helpers.h"
+using namespace marine;
+using namespace marine::ext;
 namespace marine {
-#pragma region helpers
-	static bool isOp(lexertk::token& t) {
-		if (t.value == "+" ||
-			t.value == "-" ||
-			t.value == "*" ||
-			t.value == "/" ||
-			t.value == "%" ||
-			t.value == "+=" ||
-			t.value == "-=" ||
-			t.value == "*=" ||
-			t.value == "/=" ||
-			t.value == "%=") return true;
-		else {
-			return false;
-		}
-	}
-	static bool isFloat(lexertk::token& t) {
-		bool dec = false;
-		for (char c : t.value) {
-			if (std::string("0123456789").find(c) == std::string::npos) return false;
-			if (!dec && c == '.') dec = true;
-			else if (dec) return false;
-		}
-		return true;
-	}
-	static bool isInt(lexertk::token& t) {
-		for (char c : t.value) {
-			if (std::string("0123456789").find(c) == std::string::npos) return false;
-			if (c == '.') return false;
-		}
-		return true;
-	}
-#pragma endregion
+	template <typename T>
+	std::string anyToStr(T& t) {
+		try {
+			std::stringstream s;
 
-	class Base {
-	public:
-		enum class Decl {
-			INT,
-			FLOAT,
-			STRING,
-			CUSTOM,
-			UNKNWN
-		};
-		enum class DeclConfig {
-			FIXED,
-			REF,
-			NONE
+			s << t;
 
-		};
-		const static const char* declCStr(DeclConfig& x) {
-			switch (x) {
-			case DeclConfig::FIXED:
-				return "fixed";
-			case DeclConfig::REF:
-				return "ref";
-			case DeclConfig::NONE:
-				return "NULL";
-			}
+			return s.str();
 		}
-		const static const char* declStr(Decl& x) {
-			switch (x) {
-			case Decl::INT:
-				return "int";
-			case Decl::FLOAT:
-				return "float";
-			case Decl::STRING:
-				return "string";
-			case Decl::CUSTOM:
-				return "custom";
-			default:
-				return "unknown";
-			}
+		catch(...) {
+			return "";
 		}
-		const static DeclConfig declCParse(lexertk::token& t) {
-			if (t.value == "fixed") return DeclConfig::FIXED;
-			else if (t.value == "ref") return DeclConfig::REF;
-			return DeclConfig::NONE;
-		}
-		const static Decl declareParse(lexertk::token& t) {
-			if (t.value == "int") return Decl::INT;
-			if (t.value == "float") return Decl::FLOAT;
-			if (t.value == "string") return Decl::STRING;
-			return Decl::UNKNWN;
-		}
-		static bool is(lexertk::token& t, const char* x) {
-			return t.value == x;
-		}
-	};
+	}
 	class Variable {
 	protected:
 		std::any& value;
@@ -103,6 +31,7 @@ namespace marine {
 		lexertk::token orig;
 		Base::Decl decl = Base::Decl::UNKNWN;
 		std::vector <Base::DeclConfig> configs;
+		bool __hasToken = true;
 		std::string configsStr() {
 			std::stringstream stream;
 			stream << "[";
@@ -115,6 +44,12 @@ namespace marine {
 		}
 	public:
 		Variable(std::string& _name, std::any val, lexertk::token& _orig, std::vector <Base::DeclConfig> _configs) : orig(_orig), value(val), name(_name), configs(_configs)
+		{
+		}
+		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs) : __hasToken(false), value(val), name(_name), configs(_configs)
+		{
+		}
+		Variable(std::string& _name, std::any val,std::string _origStr, std::vector <Base::DeclConfig> _configs) : orig(_origStr), __hasToken(false), value(val), name(_name), configs(_configs)
 		{
 		}
 		void setDecl(Base::Decl d) { decl = d; }
@@ -166,32 +101,36 @@ namespace marine {
 		template<typename Type>
 		Type parseExt() {
 			advance();
-			std::cout << "parsing ext at:" << cur().value << std::endl;
-			std::vector<ext::Node> exprStack;
+			/*std::vector<ext::Node> exprStack;
 			std::vector<ext::Operator> opStack;
-			bool hasBr = false;
 			int br = 0;
+			Base::Decl currentDeclarePrediciton = Base::Decl::UNKNWN;
 			while (canAdvance()) {
-				if (br == 1 && Base::is(getNext(), ")")) {
-					advance();
-					goto end;
-				}
 				/*if ((marine::isInt(getNext()) || marine::isFloat(getNext())) && !isOp(getNext(2))) {
 					advance();
 					continue;
-				}*/
-				if (marine::isInt(cur()) || marine::isFloat(cur())) {
+				}
+				for (auto& x : opStack) {
+					std::cout << "\noperator:" << x.str() << "\n" << std::endl;
+				}
+				for (auto& x : exprStack) {
+					std::cout << "\nnode:" << x.repr() << "\n" << std::endl;
+				}
+				if (marine::isFloat(cur())) {
+					currentDeclarePrediciton = Base::Decl::FLOAT;
 					std::cout << "pushing:" << cur().value << std::endl;
-					exprStack.push_back(ext::Node(cur()));
+					exprStack.push_back(ext::SingularNode(cur(), currentDeclarePrediciton));
+				}
+				else if (marine::isInt(cur())) {
+					currentDeclarePrediciton = Base::Decl::INT;
+					std::cout << "pushing:" << cur().value << std::endl;
+					exprStack.push_back(ext::SingularNode(cur(), currentDeclarePrediciton));
 				}
 				else if (cur().value == "(") {
-					std::cout << "found open br" << std::endl;
 					br++;
-					if (!hasBr) hasBr = true;
 					opStack.push_back(ext::Operator(cur()));
 				}
 				else if (marine::isOp(cur())) {
-					std::cout << "isOp:" << cur().value << std::endl;
 					while ((opStack.size() > 0 && exprStack.size() > 1) && ext::Node::precedence(opStack.back()) != -1 && ext::Node::precedence(opStack.back()) >= ext::Node::precedence(cur()))
 					{
 						std::cout << "op count:" << opStack.size() << "\nexpr count:" << exprStack.size() << std::endl;
@@ -203,88 +142,169 @@ namespace marine {
 						ext::Node e1 = exprStack.back();
 						exprStack.pop_back();
 						std::cout << "creating node: e2: " << e2.repr() << "\ne1:" << e1.repr() << "oper:" << n.str() << std::endl;
-						exprStack.push_back(ext::Node(e1, n, e2));
+						exprStack.push_back(ext::Node(e1, n, e2, currentDeclarePrediciton));
 					}
 					opStack.push_back(marine::ext::Operator(cur()));
 				}
 				else if (cur().value == ")") {
-				end:
-					std::cout << "closing";
 					br--;
-					while ((opStack.size() > 0 && exprStack.size() > 1) && opStack.back().get().value != "(") {
+					while ((opStack.size() > 0 && exprStack.size() > 1) && opStack.back().get().value != ")") {
 						ext::Operator o = opStack.back();
+						std::cout << "retrieved op:" << o.str() << std::endl;
 						opStack.pop_back();
 
 						ext::Node e2 = exprStack.back();
 						exprStack.pop_back();
 						ext::Node e1 = exprStack.back();
 						exprStack.pop_back();
-						exprStack.push_back(ext::Node(e1, o, e2));
+						exprStack.push_back(ext::Node(e1, o, e2, currentDeclarePrediciton));
 
 					}
 					if (opStack.size() > 0) {
+						std::cout << "popping:" << opStack.back().str() << std::endl;
 						opStack.pop_back();
 					}
 				}
-				else throw ("unexpected unexplainable error occured.");
-				if (br == 0 && hasBr) { advance();  break; }
+				else {
+					advance();
+					break;
+				}
+				std::cout << "br:" << br << std::endl;
 				advance();
 			}
-			for (auto& x : exprStack) {
-				std::cout << x.repr() << std::endl;
-			}
 
+			for (auto& a : exprStack) {
+				std::cout << "final result: " << a.repr()<< std::endl;
+			}
+			for (auto& a : opStack) {
+				std::cout << "final result: " << a.str() << std::endl;
+			}*/ //old code
+			//4 + (18 / (111 - 23))
+			std::function<Node()> brEval = [&]() -> Node {
+				Node* left = nullptr, * right = nullptr;
+				Operator* op = nullptr;
+				while (canAdvance()) {
+					//just encountered bracket
+					advance();
+
+
+					if (Base::is(cur(), "(")) {
+						return brEval();
+					}
+					else if (isFloat(cur())) {
+						if (left == nullptr) left = new Node(cur(), Base::Decl::FLOAT);
+						else if (right == nullptr) right = new Node(cur(), Base::Decl::FLOAT);
+					}
+					else if (isInt(cur())) {
+						if (left == nullptr) left = new Node(cur(), Base::Decl::INT);
+						else if (right == nullptr) right = new Node(cur(), Base::Decl::INT);
+					}
+					else if (isOp(cur())) {
+
+						if (op == nullptr) op = new Operator(cur());
+					}
+					if ((left != nullptr && right != nullptr && op != nullptr) || Base::is(cur(), ")")) {
+						advance();
+						//std::cout << "exiting bracket: " << left->repr() << op->str() << right->repr() << std::endl;
+						break;
+					}
+				}
+				return Node(*left, *op, *right);
+			};
+			std::vector<Node> operationStack;
+			Type finalVal{};
+			std::vector<Operator> operatorStack;
+			while (canAdvance()) {
+				if (isInt(cur())) {
+					operationStack.push_back(Node(cur(), Base::Decl::INT));
+					if (!isOp(getNext())) {
+						break;
+					}
+				}
+				else if (isFloat(cur())) {
+					operationStack.push_back(Node(cur(), Base::Decl::FLOAT));
+					if (!isOp(getNext())) {
+						break;
+					}
+				}
+				else if (Base::is(cur(), "(")) { operationStack.push_back(brEval()); }
+				else if (isOp(cur())) {
+					operatorStack.push_back(Operator(cur()));
+				}
+				if (operatorStack.size() > 0 && operationStack.size() > 1) {
+					Node right = operationStack.back();
+					operationStack.pop_back();
+					Node left = operationStack.back();
+					operationStack.pop_back();
+					Operator op = operatorStack.back();
+					operatorStack.pop_back();
+					Node n(left, op, right);
+					std::cout << n.repr() << std::endl;
+					operationStack.push_back(Node(left, op, right));
+				}
+				std::cout << "SIZE:" << operationStack.size() << std::endl;
+				advance();
+			}
+			//should only have one node
+			std::cout << "END SIZE:" << operationStack.size() << std::endl;
+			Node& operation = operationStack.back();
+			/*switch (operation.type) {
+			case Base::Decl::INT:
+				finalVal = operation.calc<int>();
+			case Base::Decl::FLOAT:
+				finalVal = operation.calc<float>();
+			case Base::Decl::STRING:
+				finalVal = operation.calc<std::string>();
+			default:
+				throw errors::MError("something unexpected happened.");
+			}*/
+			finalVal = std::any_cast<Type>(operation.calc());
+			std::cout << "found:" << finalVal;
+			return finalVal;
 		}
 		void parseDecl() {
 			Base::Decl type = Base::declareParse(cur());
+			std::cout << "variable type:" << Base::declStr(type) << std::endl;
+			lexertk::token& start = cur();
 			std::vector<Base::DeclConfig> conf{};
-			while (canAdvance()) {
-				if (Base::is(advance(), ":")) {
-					conf.push_back(Base::declCParse(advance()));
-					while (Base::is(getNext(), ",")) {
-						conf.push_back(Base::declCParse(advance(2)));
-						if (!Base::is(getNext(), ",")) break;
-					}
-					if (conf.size() == 0) throw errors::SyntaxError("no config state was supplied after ':'");
+			if (Base::is(advance(), ":")) {
+				conf.push_back(Base::declCParse(advance()));
+				while (Base::is(getNext(), ",")) {
+					conf.push_back(Base::declCParse(advance(2)));
+					if (!Base::is(getNext(), ",")) break;
 				}
-				lexertk::token& decl_name = advance();
-				if (Base::is(advance(), "=")) {
-					//IT IS VARIABLE
-					//just handle numbers for now
-					switch (type) {
-					case Base::Decl::INT:
-						parseExt<int>();
-					case Base::Decl::FLOAT:
-						parseExt<float>();
-					case Base::Decl::STRING:
-						parseExt <std::string>();
-						//case Base::Decl::CUSTOM:
-							//parseExt<std::any>();
-					}
-					if (isInt(getNext())) {
-						Variable v(decl_name.value, std::stoi(advance().value), cur(), conf);
-						v.setDecl(Base::Decl::INT);
-						core_variables.push_back(v);
-						return;
-					}
-					else if (isFloat(getNext())) {
-						Variable v(decl_name.value, std::stof(advance().value), cur(), conf);
-						v.setDecl(Base::Decl::FLOAT);
-						core_variables.push_back(v);
-						return;
-					}
-					else {
-						Variable v(decl_name.value, advance().value, cur(), conf);
-						v.setDecl(Base::Decl::STRING);
-						core_variables.push_back(v);
-						return;
-					}
-				}
-				else if (Base::is(cur(), "(")) {
-					//IT IS FUNCTION
-				}
-
+				if (conf.size() == 0) throw errors::SyntaxError("no config state was supplied after ':'");
 			}
+			lexertk::token& decl_name = advance();
+			if (Base::is(advance(), "=")) {
+				//IT IS VARIABLE
+				//just handle numbers for now
+				Variable* ret = nullptr;
+				if (type == Base::Decl::INT) {
+					int val = parseExt<int>();
+					ret = new Variable(decl_name.value, val, anyToStr<int>(val), conf);
+					ret->setDecl(Base::Decl::INT);
+				}
+				else if (type == Base::Decl::FLOAT) {
+					float val = parseExt<float>();
+					ret = new Variable(decl_name.value, val, anyToStr<float>(val), conf);
+					ret->setDecl(Base::Decl::FLOAT);
+				}
+				else if (type == Base::Decl::STRING) {
+					std::string val = parseExt<std::string>();
+					ret = new Variable(decl_name.value, val, val, conf);
+					ret->setDecl(Base::Decl::STRING);
+				}
+					//case Base::Decl::CUSTOM:
+						//parseExt<std::any>();
+				if (ret == nullptr) return;
+				core_variables.push_back(*ret);
+				return;
+			}
+			else if (Base::is(cur(), "(")) {
+				//IT IS FUNCTION
+			}
+
 		}
 		void parseFuncCall() {
 			//MOCK CODE
@@ -314,6 +334,7 @@ namespace marine {
 			advance();
 			while (canAdvance()) {
 				if (isDecl()) {
+					std::cout << "isDecl:" << cur().value << std::endl;
 					parseDecl();
 				}
 				else if (isFuncCall()) {
