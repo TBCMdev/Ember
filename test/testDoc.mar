@@ -1,2 +1,4 @@
-int:fixed myint = 1 + 1 + 1 + 1 + 1
+int:fixed myint = (14 * 2) + 2 / 3
+
+
 

@@ -137,8 +137,20 @@ namespace marine {
 				return std::string("val: " + t.value);
 			}
 			std::any calc() {
+				if (isSingular()) {
+					switch (type) {
+					case Base::Decl::INT:
+						return stoi(getToken().value);
+					case Base::Decl::FLOAT:
+						return stof(getToken().value);
+					case Base::Decl::STRING:
+						return getToken().value;
+					default:
+						throw marine::errors::MError("something unexpected happened.");
+					}
+				}
+				auto op = oper->get().value;
 				if (left->isSingular()) {
-					auto op = oper->get().value;
 					if (right->isSingular()) {
 						switch (left->type) {
 						case Base::Decl::INT:
@@ -206,11 +218,28 @@ namespace marine {
 				//LAST TODO
 				switch (left->type) {
 				case Base::Decl::INT:
-					return std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc());
+					if (op == "+")
+						return std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc());
+					else if (op == "-")
+						return std::any_cast<int>(left->calc()) - std::any_cast<int>(right->calc());
+					else if (op == "*")
+						return std::any_cast<int>(left->calc()) * std::any_cast<int>(right->calc());
+					else if (op == "/")
+						return std::any_cast<int>(left->calc()) / std::any_cast<int>(right->calc());
+					else if (op == "%")
+						return std::any_cast<int>(left->calc()) % std::any_cast<int>(right->calc());
+					
 				case Base::Decl::FLOAT:
-					return std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc());
+					if (op == "+")
+						return std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc());
+					else if (op == "-")
+						return std::any_cast<float>(left->calc()) - std::any_cast<float>(right->calc());
+					else if (op == "*")
+						return std::any_cast<float>(left->calc()) * std::any_cast<float>(right->calc());
+					else if (op == "/")
+						return std::any_cast<float>(left->calc()) / std::any_cast<float>(right->calc());
 				case Base::Decl::STRING:
-					return std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc());
+					return std::any_cast<std::string>(left->calc()) + std::any_cast<std::string>(right->calc());
 				default:
 					throw errors::MError("something unexpected happened.");
 				}

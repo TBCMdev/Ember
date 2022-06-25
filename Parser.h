@@ -8,6 +8,10 @@
 #include "MError.h"
 #include "Base.h"
 #include "helpers.h"
+
+#define DEBUG(x) std::cout << "[debug] " << x << std::endl
+
+
 using namespace marine;
 using namespace marine::ext;
 namespace marine {
@@ -99,87 +103,8 @@ namespace marine {
 			return false;
 		}
 		template<typename Type>
-		Type parseExt() {
+		Type parseExt(Base::Decl decl = Base::Decl::UNKNWN) {
 			advance();
-			/*std::vector<ext::Node> exprStack;
-			std::vector<ext::Operator> opStack;
-			int br = 0;
-			Base::Decl currentDeclarePrediciton = Base::Decl::UNKNWN;
-			while (canAdvance()) {
-				/*if ((marine::isInt(getNext()) || marine::isFloat(getNext())) && !isOp(getNext(2))) {
-					advance();
-					continue;
-				}
-				for (auto& x : opStack) {
-					std::cout << "\noperator:" << x.str() << "\n" << std::endl;
-				}
-				for (auto& x : exprStack) {
-					std::cout << "\nnode:" << x.repr() << "\n" << std::endl;
-				}
-				if (marine::isFloat(cur())) {
-					currentDeclarePrediciton = Base::Decl::FLOAT;
-					std::cout << "pushing:" << cur().value << std::endl;
-					exprStack.push_back(ext::SingularNode(cur(), currentDeclarePrediciton));
-				}
-				else if (marine::isInt(cur())) {
-					currentDeclarePrediciton = Base::Decl::INT;
-					std::cout << "pushing:" << cur().value << std::endl;
-					exprStack.push_back(ext::SingularNode(cur(), currentDeclarePrediciton));
-				}
-				else if (cur().value == "(") {
-					br++;
-					opStack.push_back(ext::Operator(cur()));
-				}
-				else if (marine::isOp(cur())) {
-					while ((opStack.size() > 0 && exprStack.size() > 1) && ext::Node::precedence(opStack.back()) != -1 && ext::Node::precedence(opStack.back()) >= ext::Node::precedence(cur()))
-					{
-						std::cout << "op count:" << opStack.size() << "\nexpr count:" << exprStack.size() << std::endl;
-						ext::Operator n = opStack.back();
-						opStack.pop_back();
-
-						ext::Node e2 = exprStack.back();
-						exprStack.pop_back();
-						ext::Node e1 = exprStack.back();
-						exprStack.pop_back();
-						std::cout << "creating node: e2: " << e2.repr() << "\ne1:" << e1.repr() << "oper:" << n.str() << std::endl;
-						exprStack.push_back(ext::Node(e1, n, e2, currentDeclarePrediciton));
-					}
-					opStack.push_back(marine::ext::Operator(cur()));
-				}
-				else if (cur().value == ")") {
-					br--;
-					while ((opStack.size() > 0 && exprStack.size() > 1) && opStack.back().get().value != ")") {
-						ext::Operator o = opStack.back();
-						std::cout << "retrieved op:" << o.str() << std::endl;
-						opStack.pop_back();
-
-						ext::Node e2 = exprStack.back();
-						exprStack.pop_back();
-						ext::Node e1 = exprStack.back();
-						exprStack.pop_back();
-						exprStack.push_back(ext::Node(e1, o, e2, currentDeclarePrediciton));
-
-					}
-					if (opStack.size() > 0) {
-						std::cout << "popping:" << opStack.back().str() << std::endl;
-						opStack.pop_back();
-					}
-				}
-				else {
-					advance();
-					break;
-				}
-				std::cout << "br:" << br << std::endl;
-				advance();
-			}
-
-			for (auto& a : exprStack) {
-				std::cout << "final result: " << a.repr()<< std::endl;
-			}
-			for (auto& a : opStack) {
-				std::cout << "final result: " << a.str() << std::endl;
-			}*/ //old code
-			//4 + (18 / (111 - 23))
 			std::function<Node()> brEval = [&]() -> Node {
 				Node* left = nullptr, * right = nullptr;
 				Operator* op = nullptr;
@@ -196,8 +121,8 @@ namespace marine {
 						else if (right == nullptr) right = new Node(cur(), Base::Decl::FLOAT);
 					}
 					else if (isInt(cur())) {
-						if (left == nullptr) left = new Node(cur(), Base::Decl::INT);
-						else if (right == nullptr) right = new Node(cur(), Base::Decl::INT);
+						if (left == nullptr) left = new Node(cur(), Base::Decl::FLOAT);
+						else if (right == nullptr) right = new Node(cur(), Base::Decl::FLOAT);
 					}
 					else if (isOp(cur())) {
 
@@ -214,21 +139,33 @@ namespace marine {
 			std::vector<Node> operationStack;
 			Type finalVal{};
 			std::vector<Operator> operatorStack;
+			bool br = false;
 			while (canAdvance()) {
+				DEBUG("checking: " + cur().value);
 				if (isInt(cur())) {
 					operationStack.push_back(Node(cur(), Base::Decl::INT));
+					DEBUG("creating node:" + operationStack.back().repr());
+					DEBUG("checking next:" + getNext().value);
 					if (!isOp(getNext())) {
-						break;
+						std::cout << ("is not op:" + getNext().value);
+						br = true;
 					}
+					std::cout << ("is op:" + getNext().value);
+
 				}
 				else if (isFloat(cur())) {
+					DEBUG("checking next:" + getNext().value);
 					operationStack.push_back(Node(cur(), Base::Decl::FLOAT));
 					if (!isOp(getNext())) {
-						break;
+						std::cout << ("is not op:" + getNext().value);
+						br = true;
 					}
+					std::cout << ("is op:" + getNext().value);
+
 				}
 				else if (Base::is(cur(), "(")) { operationStack.push_back(brEval()); }
 				else if (isOp(cur())) {
+					DEBUG("pushing op:" + cur().value);
 					operatorStack.push_back(Operator(cur()));
 				}
 				if (operatorStack.size() > 0 && operationStack.size() > 1) {
@@ -239,25 +176,22 @@ namespace marine {
 					Operator op = operatorStack.back();
 					operatorStack.pop_back();
 					Node n(left, op, right);
+					//DEBUG("creating node:" + n.repr());
 					std::cout << n.repr() << std::endl;
 					operationStack.push_back(Node(left, op, right));
 				}
-				std::cout << "SIZE:" << operationStack.size() << std::endl;
+				for (auto& x : operatorStack) DEBUG("opers on stack:" + x.str());
+				for (auto& x : operationStack) DEBUG("nodes on stack:" + x.repr());
+				if (br) { DEBUG("BREAKING FROM LOOP"); break; }
 				advance();
+				DEBUG(canAdvance());
 			}
 			//should only have one node
 			std::cout << "END SIZE:" << operationStack.size() << std::endl;
 			Node& operation = operationStack.back();
-			/*switch (operation.type) {
-			case Base::Decl::INT:
-				finalVal = operation.calc<int>();
-			case Base::Decl::FLOAT:
-				finalVal = operation.calc<float>();
-			case Base::Decl::STRING:
-				finalVal = operation.calc<std::string>();
-			default:
-				throw errors::MError("something unexpected happened.");
-			}*/
+			for (auto& a : operationStack) {
+				std::cout << "NODE: " << a.repr() << std::endl;
+			}
 			finalVal = std::any_cast<Type>(operation.calc());
 			std::cout << "found:" << finalVal;
 			return finalVal;
@@ -286,7 +220,7 @@ namespace marine {
 					ret->setDecl(Base::Decl::INT);
 				}
 				else if (type == Base::Decl::FLOAT) {
-					float val = parseExt<float>();
+					float val = parseExt<float>(Base::Decl::FLOAT);
 					ret = new Variable(decl_name.value, val, anyToStr<float>(val), conf);
 					ret->setDecl(Base::Decl::FLOAT);
 				}
@@ -378,10 +312,10 @@ namespace marine {
 			return gen[index + x];
 		}
 		bool canAdvance() {
-			return index + 1 < gen.size();
+			return index + 1 <= gen.size();
 		}
 		bool canAdvance(unsigned int x) {
-			return index + x < gen.size();
+			return index + x <= gen.size();
 		}
 	};
 }
