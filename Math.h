@@ -3,6 +3,10 @@
 #include <string>
 #include "Base.h"
 #include "MError.h"
+
+
+#define DEBUG(x) std::cout << "[debug] " << x << std::endl
+
 namespace marine {
 	namespace ext {
 		class Node;
@@ -83,17 +87,20 @@ namespace marine {
 			std::shared_ptr<Operator> oper = nullptr;
 		public:
 			Base::Decl type;
-			Node(lexertk::token to, Base::Decl decl) : t(to), type(decl) {}
+			Node(lexertk::token to, Base::Decl decl) : t(to), type(decl) {
+				std::cout << "\ncreated singular node with val of: " + to.value + ", with type of:" << Base::declStr(type) << std::endl;
+			}
 			Node(Node left, Operator _op, Node right) : left(new Node(left)), right(new Node(right)), oper(new Operator(_op)) {
 				
 				auto ltype = getRootNodeType(&left, true);
 				auto rtype = getRootNodeType(&right, false);
 
-				std::cout << "found left: " << Base::declStr(ltype) << "\nfound right:" << Base::declStr(rtype) << std::endl;
 
 				if (ltype != rtype) throw errors::MError("performing arithmatic on two types that are not supported is not allowed");
 
 				type = ltype;
+
+				std::cout << "VARIABLE final type: " << Base::declStr(type) << std::endl;
 			}
 			static Base::Decl getRootNodeType(Node* rec, bool l) {
 				if (rec->isSingular()) return Base::declLiteralParse(rec->getToken());
@@ -134,10 +141,11 @@ namespace marine {
 					}
 					return std::string("left: (" + left->repr() + ") right: (" + right->repr() + ")");
 				}
-				return std::string("val: " + t.value);
+				return std::string("val: " + t.value + ", type: '" + Base::declStr(type) + "'");
 			}
 			std::any calc() {
 				if (isSingular()) {
+					DEBUG("singular:" + repr());
 					switch (type) {
 					case Base::Decl::INT:
 						return stoi(getToken().value);
@@ -151,20 +159,26 @@ namespace marine {
 				}
 				auto op = oper->get().value;
 				if (left->isSingular()) {
+					DEBUG("left is singular:" + left->repr());
 					if (right->isSingular()) {
+						DEBUG("right is singular:" + right->repr());
 						switch (left->type) {
 						case Base::Decl::INT:
+							DEBUG("is int");
 							if (op == "+")
 								return stoi(left->getToken().value) + stoi(right->getToken().value);
 							else if(op == "-")
 								return stoi(left->getToken().value) - stoi(right->getToken().value);
-							else if(op == "*")
+							else if (op == "*") {
+								DEBUG("adding " + left->getToken().value + ", with: " + right->getToken().value);
 								return stoi(left->getToken().value) * stoi(right->getToken().value);
+							}
 							else if(op == "/")
 								return stoi(left->getToken().value) / stoi(right->getToken().value);
 							else if(op == "%")
 								return stoi(left->getToken().value) % stoi(right->getToken().value);
 						case Base::Decl::FLOAT:
+							DEBUG("is float");
 							if (op == "+")
 								return stof(left->getToken().value) + stof(right->getToken().value);
 							else if (op == "-")
@@ -218,6 +232,7 @@ namespace marine {
 				//LAST TODO
 				switch (left->type) {
 				case Base::Decl::INT:
+					std::cout << "repr before err:" + left->repr() << std::endl;
 					if (op == "+")
 						return std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc());
 					else if (op == "-")

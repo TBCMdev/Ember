@@ -18,8 +18,8 @@ public:
 
 	};
 	static Base::Decl declLiteralParse(lexertk::token& t) {
-		if (marine::isFloat(t)) return Base::Decl::FLOAT;
 		if (marine::isInt(t)) return Base::Decl::INT;
+		if (marine::isFloat(t)) return Base::Decl::FLOAT;
 	
 		return Base::Decl::STRING;
 	}

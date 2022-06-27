@@ -1,4 +1,3 @@
-int:fixed myint = (14 * 2) + 2 / 3
-
+int:ref myrefint = 0-9
 
 

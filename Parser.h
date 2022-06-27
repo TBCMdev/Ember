@@ -121,8 +121,8 @@ namespace marine {
 						else if (right == nullptr) right = new Node(cur(), Base::Decl::FLOAT);
 					}
 					else if (isInt(cur())) {
-						if (left == nullptr) left = new Node(cur(), Base::Decl::FLOAT);
-						else if (right == nullptr) right = new Node(cur(), Base::Decl::FLOAT);
+						if (left == nullptr) left = new Node(cur(), Base::Decl::INT);
+						else if (right == nullptr) right = new Node(cur(), Base::Decl::INT);
 					}
 					else if (isOp(cur())) {
 
@@ -154,6 +154,7 @@ namespace marine {
 
 				}
 				else if (isFloat(cur())) {
+					DEBUG("identified float:" + cur().value);
 					DEBUG("checking next:" + getNext().value);
 					operationStack.push_back(Node(cur(), Base::Decl::FLOAT));
 					if (!isOp(getNext())) {
@@ -182,9 +183,8 @@ namespace marine {
 				}
 				for (auto& x : operatorStack) DEBUG("opers on stack:" + x.str());
 				for (auto& x : operationStack) DEBUG("nodes on stack:" + x.repr());
-				if (br) { DEBUG("BREAKING FROM LOOP"); break; }
+				if (br)  break; 
 				advance();
-				DEBUG(canAdvance());
 			}
 			//should only have one node
 			std::cout << "END SIZE:" << operationStack.size() << std::endl;
