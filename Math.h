@@ -45,8 +45,8 @@ namespace marine {
 			std::string x = "";
 			lexertk::token _t;
 		public:
-			
-			Operator(lexertk::token t, bool th = true): _t(t) {
+
+			Operator(lexertk::token t, bool th = true) : _t(t) {
 				if (t.value == "+") type = OPTYPE::ADD;
 				else if (t.value == "+") type = OPTYPE::ADD;
 				else if (t.value == "-") type = OPTYPE::SUB;
@@ -85,13 +85,14 @@ namespace marine {
 			std::shared_ptr<Node> left = nullptr;
 			std::shared_ptr<Node> right = nullptr;
 			std::shared_ptr<Operator> oper = nullptr;
+			bool negated = false;
 		public:
 			Base::Decl type;
-			Node(lexertk::token to, Base::Decl decl) : t(to), type(decl) {
+			Node(lexertk::token to, Base::Decl decl, bool __negate = false) : t(to), type(decl), negated(__negate) {
 				std::cout << "\ncreated singular node with val of: " + to.value + ", with type of:" << Base::declStr(type) << std::endl;
 			}
-			Node(Node left, Operator _op, Node right) : left(new Node(left)), right(new Node(right)), oper(new Operator(_op)) {
-				
+			Node(Node left, Operator _op, Node right, bool __negate = false) : left(new Node(left)), right(new Node(right)), oper(new Operator(_op)), negated(__negate) {
+
 				auto ltype = getRootNodeType(&left, true);
 				auto rtype = getRootNodeType(&right, false);
 
@@ -128,6 +129,10 @@ namespace marine {
 				if (o.value == "+" || o.value == "-")  return 3;
 				return -1;
 			}
+			void negate() {
+				negated = true;
+			}
+			bool isNegated() { return negated; }
 			lexertk::token& getToken() { return t; }
 			Node* getLeft() { return left.get(); }
 			Node* getRight() { return right.get(); }
@@ -137,20 +142,20 @@ namespace marine {
 			virtual std::string repr() {
 				if (right != nullptr && left != nullptr) {
 					if (oper != nullptr) {
-						return std::string("left: (" + left->repr() + ") right: (" + right->repr() + ")" + ", operator: '" + oper->str() + "'");
+						return std::string("left: (" + left->repr() + ") right: (" + right->repr() + ")" + ", operator: '" + oper->str() + "', negative: " + (negated ? "Y" : "N"));
 					}
-					return std::string("left: (" + left->repr() + ") right: (" + right->repr() + ")");
+					return std::string("left: (" + left->repr() + ") right: (" + right->repr() + "), negative: " + (negated ? "Y" : "N"));
 				}
-				return std::string("val: " + t.value + ", type: '" + Base::declStr(type) + "'");
+				return std::string("val: " + (negated ? "-" + t.value : t.value) + ", type: '" + Base::declStr(type) + "'");
 			}
 			std::any calc() {
 				if (isSingular()) {
 					DEBUG("singular:" + repr());
 					switch (type) {
 					case Base::Decl::INT:
-						return stoi(getToken().value);
+						return negated ? -stoi(getToken().value) : stoi(getToken().value);
 					case Base::Decl::FLOAT:
-						return stof(getToken().value);
+						return negated ? -stof(getToken().value) : stof(getToken().value);
 					case Base::Decl::STRING:
 						return getToken().value;
 					default:
@@ -166,27 +171,90 @@ namespace marine {
 						case Base::Decl::INT:
 							DEBUG("is int");
 							if (op == "+")
-								return stoi(left->getToken().value) + stoi(right->getToken().value);
-							else if(op == "-")
-								return stoi(left->getToken().value) - stoi(right->getToken().value);
-							else if (op == "*") {
-								DEBUG("adding " + left->getToken().value + ", with: " + right->getToken().value);
-								return stoi(left->getToken().value) * stoi(right->getToken().value);
-							}
-							else if(op == "/")
-								return stoi(left->getToken().value) / stoi(right->getToken().value);
-							else if(op == "%")
-								return stoi(left->getToken().value) % stoi(right->getToken().value);
-						case Base::Decl::FLOAT:
-							DEBUG("is float");
-							if (op == "+")
-								return stof(left->getToken().value) + stof(right->getToken().value);
+								if (left->isNegated())
+									if (!right->isNegated())
+										return (negated ? -(-stoi(left->getToken().value) + stoi(right->getToken().value)) : -stoi(left->getToken().value) + stoi(right->getToken().value));
+									else
+										return (negated ? -(-stoi(left->getToken().value) - stoi(right->getToken().value)): -stoi(left->getToken().value) - stoi(right->getToken().value));
+								else if (right->isNegated())
+									return (negated ? -(stoi(left->getToken().value) - stoi(right->getToken().value)) : stoi(left->getToken().value) - stoi(right->getToken().value));
+								else return (negated ? -(stoi(left->getToken().value) + stoi(right->getToken().value)) : stoi(left->getToken().value) + stoi(right->getToken().value));
+
 							else if (op == "-")
-								return stof(left->getToken().value) - stof(right->getToken().value);
-							else if (op == "*")
-								return stof(left->getToken().value) * stof(right->getToken().value);
+								if (left->isNegated())
+									if (!right->isNegated())
+										return (negated ? -(-stoi(left->getToken().value) - stoi(right->getToken().value)) : -stoi(left->getToken().value) - stoi(right->getToken().value));
+									else
+										return (negated ? -(stoi(left->getToken().value) + stoi(right->getToken().value)) : stoi(left->getToken().value) + stoi(right->getToken().value));
+								else if (right->isNegated())
+									return (negated ? -(stoi(left->getToken().value) + stoi(right->getToken().value)) : stoi(left->getToken().value) + stoi(right->getToken().value));
+								else return (negated ? -(stoi(left->getToken().value) - stoi(right->getToken().value)) : stoi(left->getToken().value) - stoi(right->getToken().value));
+							else if (op == "*") {
+								if (left->isNegated())
+									if (!right->isNegated())
+										return (negated ? -(-stoi(left->getToken().value) * stoi(right->getToken().value)) : -stoi(left->getToken().value) * stoi(right->getToken().value));
+									else
+										return (negated ? -(-stoi(left->getToken().value) * -stoi(right->getToken().value)) : -stoi(left->getToken().value) * -stoi(right->getToken().value));
+								else if (right->isNegated())
+									return (negated ? -(stoi(left->getToken().value) * -stoi(right->getToken().value)) : stoi(left->getToken().value) * -stoi(right->getToken().value));
+								else return (negated ? -(stoi(left->getToken().value) * stoi(right->getToken().value)) : stoi(left->getToken().value) * stoi(right->getToken().value));
+							}
 							else if (op == "/")
-								return stof(left->getToken().value) / stof(right->getToken().value);
+								if (left->isNegated())
+									if (!right->isNegated())
+										return (negated ? -(-stoi(left->getToken().value) / stoi(right->getToken().value)) : -stoi(left->getToken().value) / stoi(right->getToken().value));
+									else
+										return (negated ? -(-stoi(left->getToken().value) / -stoi(right->getToken().value)) : -stoi(left->getToken().value) / -stoi(right->getToken().value));
+								else if (right->isNegated())
+									return (negated ? -(stoi(left->getToken().value) / -stoi(right->getToken().value)) : stoi(left->getToken().value) / -stoi(right->getToken().value));
+								else return (negated ? -(stoi(left->getToken().value) / stoi(right->getToken().value)) : stoi(left->getToken().value) / stoi(right->getToken().value));
+							else if (op == "%")
+								if (left->isNegated())
+									if (!right->isNegated())
+										return (negated ? -(-stoi(left->getToken().value) % stoi(right->getToken().value)) : -stoi(left->getToken().value) % stoi(right->getToken().value));
+									else
+										return (negated ? -(-stoi(left->getToken().value) % -stoi(right->getToken().value)) : -stoi(left->getToken().value) % -stoi(right->getToken().value));
+								else if (right->isNegated())
+									return (negated ? -(stoi(left->getToken().value) % -stoi(right->getToken().value)) : stoi(left->getToken().value) % -stoi(right->getToken().value));
+								else return (negated ? -(stoi(left->getToken().value) % stoi(right->getToken().value)) : stoi(left->getToken().value) % stoi(right->getToken().value));
+						case Base::Decl::FLOAT:
+							if (op == "+")
+								if (left->isNegated())
+									if (!right->isNegated())
+										return (negated ? -(-stof(left->getToken().value) + stof(right->getToken().value)) : -stof(left->getToken().value) + stof(right->getToken().value));
+									else
+										return (negated ? -(-stof(left->getToken().value) + -stof(right->getToken().value)) : -stof(left->getToken().value) + -stof(right->getToken().value));
+								else if (right->isNegated())
+									return (negated ? -(stof(left->getToken().value) - stof(right->getToken().value)) : stof(left->getToken().value) - stof(right->getToken().value));
+								else return (negated ? -(stof(left->getToken().value) + stof(right->getToken().value)) : stof(left->getToken().value) + stof(right->getToken().value));
+							else if (op == "-")
+								if (left->isNegated())
+									if (!right->isNegated())
+										return (negated ? -(-stof(left->getToken().value) - stof(right->getToken().value)) : -stof(left->getToken().value) - stof(right->getToken().value));
+									else
+										return (negated ? -(stof(left->getToken().value) + stof(right->getToken().value)) : stof(left->getToken().value) + stof(right->getToken().value));
+								else if (right->isNegated())
+									return (negated ? -(stof(left->getToken().value) - -stof(right->getToken().value)) : stof(left->getToken().value) - -stof(right->getToken().value));
+								else return (negated ? -(stof(left->getToken().value) - stof(right->getToken().value)) : stof(left->getToken().value) - stof(right->getToken().value));
+							else if (op == "*") {
+								if (left->isNegated())
+									if (!right->isNegated())
+										return (negated ? -(-stof(left->getToken().value) * stof(right->getToken().value)) : -stof(left->getToken().value) * stof(right->getToken().value));
+									else
+										return (negated ? -(-stof(left->getToken().value) * -stof(right->getToken().value)) : -stof(left->getToken().value) * -stof(right->getToken().value));
+								else if (right->isNegated())
+									return (negated ? -(stof(left->getToken().value) * -stof(right->getToken().value)) : stof(left->getToken().value) * -stof(right->getToken().value));
+								else return (negated ? -(stof(left->getToken().value) * stof(right->getToken().value)) : stof(left->getToken().value) * stof(right->getToken().value));
+							}
+							else if (op == "/")
+								if (left->isNegated())
+									if (!right->isNegated())
+										return (negated ? -(-stof(left->getToken().value) / stof(right->getToken().value)) : -stof(left->getToken().value) / stof(right->getToken().value));
+									else
+										return (negated ? -(-stof(left->getToken().value) / -stof(right->getToken().value)) : -stof(left->getToken().value) / -stof(right->getToken().value));
+								else if (right->isNegated())
+									return (negated ? -(stof(left->getToken().value) / -stof(right->getToken().value)) : stof(left->getToken().value) / -stof(right->getToken().value));
+								else return (negated ? -(stof(left->getToken().value) / stof(right->getToken().value)) : stof(left->getToken().value) / stof(right->getToken().value));
 						case Base::Decl::STRING:
 							if (op == "+")
 								return left->getToken().value + right->getToken().value;
@@ -205,24 +273,87 @@ namespace marine {
 					switch (left->type) {
 					case Base::Decl::INT:
 						if (op == "+")
-							return stoi(left->getToken().value) + std::any_cast<int>(right->calc());
+							if (left->isNegated())
+								if (!right->isNegated())
+									return (negated ? -(-stoi(left->getToken().value) + std::any_cast<int>(right->calc())) : -stoi(left->getToken().value) + std::any_cast<int>(right->calc()));
+								else
+									return (negated ? -(-stoi(left->getToken().value) - std::any_cast<int>(right->calc())) : -stoi(left->getToken().value) - std::any_cast<int>(right->calc()));
+							else if (right->isNegated())
+								return (negated ? -(stoi(left->getToken().value) + std::any_cast<int>(right->calc())) : stoi(left->getToken().value) + std::any_cast<int>(right->calc()));
+							else return (negated ? -(stoi(left->getToken().value) + std::any_cast<int>(right->calc())) : stoi(left->getToken().value) + std::any_cast<int>(right->calc()));
 						else if (op == "-")
-							return stoi(left->getToken().value) - std::any_cast<int>(right->calc());
+							if (left->isNegated())
+								if (!right->isNegated())
+									return (negated ? -(-stoi(left->getToken().value) - std::any_cast<int>(right->calc())) : -stoi(left->getToken().value) - std::any_cast<int>(right->calc()));
+								else
+									return (negated ? -(stoi(left->getToken().value) + std::any_cast<int>(right->calc())) : stoi(left->getToken().value) + std::any_cast<int>(right->calc()));
+							else if (right->isNegated())
+								return (negated ? -(stoi(left->getToken().value) + std::any_cast<int>(right->calc())) : stoi(left->getToken().value) + std::any_cast<int>(right->calc()));
+							else return stoi(left->getToken().value) - std::any_cast<int>(right->calc());
 						else if (op == "*")
-							return stoi(left->getToken().value) * std::any_cast<int>(right->calc());
+							if (left->isNegated())
+								if (right->isNegated())
+									return (negated ? -(-stoi(left->getToken().value) * -std::any_cast<int>(right->calc())) : -stoi(left->getToken().value) * -std::any_cast<int>(right->calc()));
+								else
+									return (negated ? -(-stoi(left->getToken().value) * std::any_cast<int>(right->calc())) : -stoi(left->getToken().value) * std::any_cast<int>(right->calc()));
+							else if (right->isNegated())
+								return (negated ? -(stoi(left->getToken().value) * -std::any_cast<int>(right->calc())) : stoi(left->getToken().value) * -std::any_cast<int>(right->calc()));
+							else return stoi(left->getToken().value) * std::any_cast<int>(right->calc());
 						else if (op == "/")
-							return stoi(left->getToken().value) / std::any_cast<int>(right->calc());
+							if (left->isNegated())
+								if (right->isNegated())
+									return (negated ? -(-stoi(left->getToken().value) / -std::any_cast<int>(right->calc())) : -stoi(left->getToken().value) / -std::any_cast<int>(right->calc()));
+								else
+									return (negated ? -(-stoi(left->getToken().value) / std::any_cast<int>(right->calc())) : -stoi(left->getToken().value) / std::any_cast<int>(right->calc()));
+							else if (right->isNegated())
+								return (negated ? -(stoi(left->getToken().value) / -std::any_cast<int>(right->calc())) : stoi(left->getToken().value) / -std::any_cast<int>(right->calc()));
+							else return (negated ? -(stoi(left->getToken().value) / std::any_cast<int>(right->calc())) : stoi(left->getToken().value) / std::any_cast<int>(right->calc()));
 						else if (op == "%")
-							return stoi(left->getToken().value) % std::any_cast<int>(right->calc());
+							if (left->isNegated())
+								if (right->isNegated())
+									return (negated ? -(-stoi(left->getToken().value) % -std::any_cast<int>(right->calc())) : -stoi(left->getToken().value) % -std::any_cast<int>(right->calc()));
+								else
+									return (negated ? -(-stoi(left->getToken().value) % std::any_cast<int>(right->calc())) : -stoi(left->getToken().value) % std::any_cast<int>(right->calc()));
+							else if (right->isNegated())
+								return (negated ? -(stoi(left->getToken().value) % -std::any_cast<int>(right->calc())) : stoi(left->getToken().value) % -std::any_cast<int>(right->calc()));
+							else return (negated ? -(stoi(left->getToken().value) % std::any_cast<int>(right->calc())) : stoi(left->getToken().value) % std::any_cast<int>(right->calc()));
 					case Base::Decl::FLOAT:
 						if (op == "+")
-							return stof(left->getToken().value) + std::any_cast<float>(right->calc());
+							if (left->isNegated())
+								if (!right->isNegated())
+									return (negated ? -(-stof(left->getToken().value) + std::any_cast<float>(right->calc())) : -stof(left->getToken().value) + std::any_cast<float>(right->calc()));
+								else
+									return (negated ? -(-stof(left->getToken().value) - std::any_cast<float>(right->calc())) : -stof(left->getToken().value) - std::any_cast<float>(right->calc()));
+							else if (right->isNegated())
+								return (negated ? -(stof(left->getToken().value) + std::any_cast<float>(right->calc())) : stof(left->getToken().value) + std::any_cast<float>(right->calc()));
+							else return (negated ? -(stof(left->getToken().value) + std::any_cast<float>(right->calc())) : stof(left->getToken().value) + std::any_cast<float>(right->calc()));
 						else if (op == "-")
-							return stof(left->getToken().value) - std::any_cast<float>(right->calc());
+							if (left->isNegated())
+								if (!right->isNegated())
+									return (negated ? -(-stof(left->getToken().value) - std::any_cast<float>(right->calc())) : -stof(left->getToken().value) - std::any_cast<float>(right->calc()));
+								else
+									return (negated ? -(-stof(left->getToken().value) + std::any_cast<float>(right->calc())) : -stof(left->getToken().value) + std::any_cast<float>(right->calc()));
+							else if (right->isNegated())
+								return (negated ? -(stof(left->getToken().value) + std::any_cast<float>(right->calc())) : stof(left->getToken().value) + std::any_cast<float>(right->calc()));
+							else return (negated ? -(stof(left->getToken().value) - std::any_cast<float>(right->calc())) : stof(left->getToken().value) - std::any_cast<float>(right->calc()));
 						else if (op == "*")
-							return stof(left->getToken().value) * std::any_cast<float>(right->calc());
+							if (left->isNegated())
+								if(!right->isNegated())
+									return (negated ? -(-stof(left->getToken().value) * std::any_cast<float>(right->calc())) : -stof(left->getToken().value) * std::any_cast<float>(right->calc()));
+								else
+									return (negated ? -(stof(left->getToken().value) * std::any_cast<float>(right->calc())) : stof(left->getToken().value) * std::any_cast<float>(right->calc()));
+							else if(right->isNegated())
+								return (negated ? -(stof(left->getToken().value) * -std::any_cast<float>(right->calc())) : stof(left->getToken().value) * -std::any_cast<float>(right->calc()));
+							else return (negated ? -(stof(left->getToken().value) * std::any_cast<float>(right->calc())) : stof(left->getToken().value) * std::any_cast<float>(right->calc()));
 						else if (op == "/")
-							return stof(left->getToken().value) / std::any_cast<float>(right->calc());
+							if (left->isNegated())
+								if (!right->isNegated())
+									return (negated ? -(-stof(left->getToken().value) / std::any_cast<float>(right->calc())) : -stof(left->getToken().value) / std::any_cast<float>(right->calc()));
+								else
+									return (negated ? -(-stof(left->getToken().value) / std::any_cast<float>(right->calc())) : -stof(left->getToken().value) / std::any_cast<float>(right->calc()));
+							else if (right->isNegated())
+								return (negated ? -(stof(left->getToken().value) / -std::any_cast<float>(right->calc())) : stof(left->getToken().value) / -std::any_cast<float>(right->calc()));
+							else return (negated ? -(stof(left->getToken().value) / std::any_cast<float>(right->calc())) : stof(left->getToken().value) / std::any_cast<float>(right->calc()));
 					case Base::Decl::STRING:
 						return left->getToken().value + std::any_cast<std::string>(right->calc());
 					default:
@@ -232,27 +363,88 @@ namespace marine {
 				//LAST TODO
 				switch (left->type) {
 				case Base::Decl::INT:
-					std::cout << "repr before err:" + left->repr() << std::endl;
 					if (op == "+")
-						return std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc());
+						if (left->isNegated())
+							if (!right->isNegated())
+								return (negated ? -(std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc())) : -std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc()));
+							else
+								return ( negated ? -(-std::any_cast<int>(left->calc()) - std::any_cast<int>(right->calc())) : -std::any_cast<int>(left->calc()) - std::any_cast<int>(right->calc()));
+						else if (right->isNegated())
+							return (negated ? -(std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc()));
+						else return (negated ? -(std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc()));
 					else if (op == "-")
-						return std::any_cast<int>(left->calc()) - std::any_cast<int>(right->calc());
+						if (left->isNegated())
+							if (!right->isNegated())
+								return (negated ? -(-std::any_cast<int>(left->calc()) - std::any_cast<int>(right->calc())) : -std::any_cast<int>(left->calc()) - std::any_cast<int>(right->calc()));
+							else
+								return (negated ? -(std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc()));
+						else if (right->isNegated())
+							return (negated ? -(std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) + std::any_cast<int>(right->calc()));
+						else return (negated ? -(std::any_cast<int>(left->calc()) - std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) - std::any_cast<int>(right->calc()));
 					else if (op == "*")
-						return std::any_cast<int>(left->calc()) * std::any_cast<int>(right->calc());
+						if (left->isNegated())
+							if (right->isNegated())
+								return (negated ? -(-std::any_cast<int>(left->calc()) * -std::any_cast<int>(right->calc())) : -std::any_cast<int>(left->calc()) * -std::any_cast<int>(right->calc()));
+							else
+								return (negated ?  -(-std::any_cast<int>(left->calc()) * std::any_cast<int>(right->calc())) : -std::any_cast<int>(left->calc()) * std::any_cast<int>(right->calc()));
+						else if (right->isNegated())
+							return (negated ? -(std::any_cast<int>(left->calc()) * -std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) * -std::any_cast<int>(right->calc()));
+						else return (negated ? -(std::any_cast<int>(left->calc()) * std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) * std::any_cast<int>(right->calc()));
 					else if (op == "/")
-						return std::any_cast<int>(left->calc()) / std::any_cast<int>(right->calc());
+						if (left->isNegated())
+							if (right->isNegated())
+								return (negated ? -(-std::any_cast<int>(left->calc()) / -std::any_cast<int>(right->calc())) : -std::any_cast<int>(left->calc()) / -std::any_cast<int>(right->calc()));
+							else
+								return (negated ? -(-std::any_cast<int>(left->calc()) / std::any_cast<int>(right->calc())) : -std::any_cast<int>(left->calc()) / std::any_cast<int>(right->calc()));
+						else if (right->isNegated())
+							return (negated ? -(std::any_cast<int>(left->calc()) / -std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) / -std::any_cast<int>(right->calc()));
+						else return (negated ? -(std::any_cast<int>(left->calc()) / std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) / std::any_cast<int>(right->calc()));
 					else if (op == "%")
-						return std::any_cast<int>(left->calc()) % std::any_cast<int>(right->calc());
-					
+						if (left->isNegated())
+							if (right->isNegated())
+								return (negated ? -(-std::any_cast<int>(left->calc()) % -std::any_cast<int>(right->calc())) : -std::any_cast<int>(left->calc()) % -std::any_cast<int>(right->calc()));
+							else
+								return (negated ? -(-std::any_cast<int>(left->calc()) % std::any_cast<int>(right->calc())) : -std::any_cast<int>(left->calc()) % std::any_cast<int>(right->calc()));
+						else if (right->isNegated())
+							return (negated ? -(std::any_cast<int>(left->calc()) % -std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) % -std::any_cast<int>(right->calc()));
+						else return (negated ? -(std::any_cast<int>(left->calc()) % std::any_cast<int>(right->calc())) : std::any_cast<int>(left->calc()) % std::any_cast<int>(right->calc()));
 				case Base::Decl::FLOAT:
 					if (op == "+")
-						return std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc());
+						if (left->isNegated())
+							if (!right->isNegated())
+								return (negated ? -(-std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc())) : -std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc()));
+							else
+								return (negated ? -(-std::any_cast<float>(left->calc()) - std::any_cast<float>(right->calc())) : -std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc()));
+						else if (right->isNegated())
+							return (negated ? -(std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc())) : std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc()));
+						else return (negated ? -(std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc())) : std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc()));
 					else if (op == "-")
-						return std::any_cast<float>(left->calc()) - std::any_cast<float>(right->calc());
+						if (left->isNegated())
+							if (!right->isNegated())
+								return (negated ? -(-std::any_cast<float>(left->calc()) - std::any_cast<float>(right->calc())) : -std::any_cast<float>(left->calc()) - std::any_cast<float>(right->calc()));
+							else
+								return (negated ? -(-std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc())) : -std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc()));
+						else if (right->isNegated())
+							return (negated ? -(std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc())) : std::any_cast<float>(left->calc()) + std::any_cast<float>(right->calc()));
+						else return (negated ? -(std::any_cast<float>(left->calc()) - std::any_cast<float>(right->calc())) : std::any_cast<float>(left->calc()) - std::any_cast<float>(right->calc()));
 					else if (op == "*")
-						return std::any_cast<float>(left->calc()) * std::any_cast<float>(right->calc());
+						if (left->isNegated())
+							if (!right->isNegated())
+								return (negated ? -(-std::any_cast<float>(left->calc()) * std::any_cast<float>(right->calc())) : -std::any_cast<float>(left->calc()) * std::any_cast<float>(right->calc()));
+							else
+								return (negated ? -(std::any_cast<float>(left->calc()) * std::any_cast<float>(right->calc())) : std::any_cast<float>(left->calc()) * std::any_cast<float>(right->calc()));
+						else if (right->isNegated())
+							return (negated ? -(std::any_cast<float>(left->calc()) * -std::any_cast<float>(right->calc())) : std::any_cast<float>(left->calc()) * -std::any_cast<float>(right->calc()));
+						else return (negated ? -(std::any_cast<float>(left->calc()) * std::any_cast<float>(right->calc())) : std::any_cast<float>(left->calc()) * std::any_cast<float>(right->calc()));
 					else if (op == "/")
-						return std::any_cast<float>(left->calc()) / std::any_cast<float>(right->calc());
+						if (left->isNegated())
+							if (!right->isNegated())
+								return (negated ? -(-std::any_cast<float>(left->calc()) / std::any_cast<float>(right->calc())) : -std::any_cast<float>(left->calc()) / std::any_cast<float>(right->calc()));
+							else
+								return (negated ? -(std::any_cast<float>(left->calc()) / std::any_cast<float>(right->calc())) : std::any_cast<float>(left->calc()) / std::any_cast<float>(right->calc()));
+						else if (right->isNegated())
+							return (negated ? -(std::any_cast<float>(left->calc()) / -std::any_cast<float>(right->calc())) : std::any_cast<float>(left->calc()) / -std::any_cast<float>(right->calc()));
+						else return (negated ? -(std::any_cast<float>(left->calc()) / std::any_cast<float>(right->calc())) : std::any_cast<float>(left->calc()) / std::any_cast<float>(right->calc()));
 				case Base::Decl::STRING:
 					return std::any_cast<std::string>(left->calc()) + std::any_cast<std::string>(right->calc());
 				default:

@@ -105,27 +105,43 @@ namespace marine {
 		template<typename Type>
 		Type parseExt(Base::Decl decl = Base::Decl::UNKNWN) {
 			advance();
-			std::function<Node()> brEval = [&]() -> Node {
+			std::function<Node(bool)> brEval = [&](bool negate) -> Node {
 				Node* left = nullptr, * right = nullptr;
 				Operator* op = nullptr;
+				bool negate_next_node_recr = false;
 				while (canAdvance()) {
 					//just encountered bracket
 					advance();
 
-
+					// -(14 - -2)
 					if (Base::is(cur(), "(")) {
-						return brEval();
+						return brEval(negate_next_node_recr);
 					}
 					else if (isFloat(cur())) {
-						if (left == nullptr) left = new Node(cur(), Base::Decl::FLOAT);
-						else if (right == nullptr) right = new Node(cur(), Base::Decl::FLOAT);
+						if (left == nullptr) {
+
+							left = new Node(cur(), Base::Decl::FLOAT, negate_next_node_recr);
+							if (negate_next_node_recr) negate_next_node_recr = false;
+						}
+						else if (right == nullptr){
+							right = new Node(cur(), Base::Decl::FLOAT, negate_next_node_recr);
+
+							if (negate_next_node_recr) negate_next_node_recr = false;
+						}
 					}
 					else if (isInt(cur())) {
-						if (left == nullptr) left = new Node(cur(), Base::Decl::INT);
-						else if (right == nullptr) right = new Node(cur(), Base::Decl::INT);
+						if (left == nullptr) { 
+							left = new Node(cur(), Base::Decl::INT, negate_next_node_recr); 
+							if (negate_next_node_recr) negate_next_node_recr = false;
+						}
+						else if (right == nullptr) {
+							right = new Node(cur(), Base::Decl::INT, negate_next_node_recr);
+							if (negate_next_node_recr) negate_next_node_recr = false;
+
+						}
 					}
 					else if (isOp(cur())) {
-
+						if (Base::is(cur(), "-") && (left == nullptr || op != nullptr)) negate_next_node_recr = true;
 						if (op == nullptr) op = new Operator(cur());
 					}
 					if ((left != nullptr && right != nullptr && op != nullptr) || Base::is(cur(), ")")) {
@@ -134,16 +150,19 @@ namespace marine {
 						break;
 					}
 				}
-				return Node(*left, *op, *right);
+				return Node(*left, *op, *right, negate);
 			};
 			std::vector<Node> operationStack;
 			Type finalVal{};
 			std::vector<Operator> operatorStack;
 			bool br = false;
+			bool negate_next_node = false;
 			while (canAdvance()) {
 				DEBUG("checking: " + cur().value);
 				if (isInt(cur())) {
-					operationStack.push_back(Node(cur(), Base::Decl::INT));
+					operationStack.push_back(Node(cur(), Base::Decl::INT, negate_next_node));
+					if (negate_next_node) negate_next_node = false;
+
 					DEBUG("creating node:" + operationStack.back().repr());
 					DEBUG("checking next:" + getNext().value);
 					if (!isOp(getNext())) {
@@ -156,7 +175,8 @@ namespace marine {
 				else if (isFloat(cur())) {
 					DEBUG("identified float:" + cur().value);
 					DEBUG("checking next:" + getNext().value);
-					operationStack.push_back(Node(cur(), Base::Decl::FLOAT));
+					operationStack.push_back(Node(cur(), Base::Decl::FLOAT,negate_next_node));
+					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext())) {
 						std::cout << ("is not op:" + getNext().value);
 						br = true;
@@ -164,11 +184,21 @@ namespace marine {
 					std::cout << ("is op:" + getNext().value);
 
 				}
-				else if (Base::is(cur(), "(")) { operationStack.push_back(brEval()); }
-				else if (isOp(cur())) {
-					DEBUG("pushing op:" + cur().value);
-					operatorStack.push_back(Operator(cur()));
+				else if (Base::is(cur(), "(")) { 
+					operationStack.push_back(brEval(negate_next_node));
+					if (negate_next_node) negate_next_node = false;
 				}
+				else if (isOp(cur())) {
+					if (operationStack.size() < 1 && (Base::is(cur(), "-") || Base::is(cur(), "+"))) {
+						DEBUG("found negator op:" + cur().value);
+						negate_next_node = true;
+					}
+					else {
+						DEBUG("pushing op:" + cur().value);
+						operatorStack.push_back(Operator(cur()));
+					}
+				}
+
 				if (operatorStack.size() > 0 && operationStack.size() > 1) {
 					Node right = operationStack.back();
 					operationStack.pop_back();
@@ -201,7 +231,8 @@ namespace marine {
 			std::cout << "variable type:" << Base::declStr(type) << std::endl;
 			lexertk::token& start = cur();
 			std::vector<Base::DeclConfig> conf{};
-			if (Base::is(advance(), ":")) {
+			if (Base::is(getNext(), ":")) {
+				advance();
 				conf.push_back(Base::declCParse(advance()));
 				while (Base::is(getNext(), ",")) {
 					conf.push_back(Base::declCParse(advance(2)));
