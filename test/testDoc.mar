@@ -1,3 +1,5 @@
-int myrefint = -1000 - (14 + 2)
+string myreturnstring = ask("what is your favorite color: ") + 4
 
-
+if (myreturnstring == "green"){
+	log("i dont like green.")
+}

@@ -23,6 +23,20 @@ namespace marine {
 				return MError::construct(what_c, "Syntax Error");
 			}
 		};
+		struct IndexError : private MError {
+			using MError::MError;
+		public:
+			const char* what() throw() override {
+				return MError::construct(what_c, "Index Out Of Range Error");
+			}
+		};
+		struct RuntimeError : private MError {
+			using MError::MError;
+		public:
+			const char* what() throw() override {
+				return MError::construct(what_c, "Runtime Error");
+			}
+		};
 		struct TypeError : private MError {
 			using MError::MError;
 		public:

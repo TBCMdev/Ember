@@ -20,6 +20,13 @@ namespace marine {
 			return false;
 		}
 	}
+	static bool isLogicalOp(lexertk::token& t) {
+		if (t.value == "==" ||
+			t.value == "!=" ||
+			t.value == ">=" ||
+			t.value == "<=") return true;
+		else return false;
+	}
 	static bool isFloat(lexertk::token& t) {
 		bool dec = false;
 		for (char c : t.value) {
@@ -28,6 +35,11 @@ namespace marine {
 			else if (dec) return false;
 		}
 		if (!dec) return false;
+		return true;
+	}
+	static bool isString(lexertk::token& s) {
+		std::cout << "first:" << s.value[0] << "last: " << s.value.back() << std::endl;
+		if ((s.value[0] != '"' && s.value[0] != '\'') || (s.value.back() != '"' && s.value.back() != '\'')) return false;
 		return true;
 	}
 	static bool isInt(lexertk::token& t) {

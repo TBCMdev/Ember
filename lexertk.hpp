@@ -54,8 +54,6 @@
 #include <stdexcept>
 #include <string>
 
-using namespace std;
-
 namespace lexertk
 {
 

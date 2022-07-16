@@ -4,6 +4,13 @@
 #include "helpers.h"
 class Base {
 public:
+	enum class RetDecl {
+		INT,
+		FLOAT,
+		STRING,
+		CUSTOM,
+		VOID
+	};
 	enum class Decl {
 		INT,
 		FLOAT,
@@ -20,10 +27,10 @@ public:
 	static Base::Decl declLiteralParse(lexertk::token& t) {
 		if (marine::isInt(t)) return Base::Decl::INT;
 		if (marine::isFloat(t)) return Base::Decl::FLOAT;
-	
-		return Base::Decl::STRING;
+		if (marine::isString(t)) return Base::Decl::STRING;
+		return Base::Decl::UNKNWN;
 	}
-	static const char* declCStr(DeclConfig& x) {
+	static const char* declCStr(DeclConfig x) {
 		switch (x) {
 		case DeclConfig::FIXED:
 			return "fixed";

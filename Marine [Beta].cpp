@@ -10,8 +10,10 @@
 #include <filesystem>
 #include "lexertk.hpp"
 #include "Parser.h"
+#include "inb.h"
+#include <Windows.h>
 
-using namespace std;
+
 
 static bool USING_GAME_LIB = false;
 static bool debug = false;
@@ -29,7 +31,7 @@ public:
 		if (!generator.process(fc))
 		{
 			if (debug)
-				cout << "Failed to lex: " << fc << endl;
+				std::cout << "Failed to lex: " << fc << std::endl;
 		}
 
 		if (debug)
@@ -40,7 +42,7 @@ public:
 	inline static std::set<string> readflowcppdep()
 	{
 		std::set<string> res;
-		for (const auto& file : filesystem::directory_iterator("C:\\Flow\\bin\\"))
+		for (const auto& file : std::filesystem::directory_iterator("C:\\Flow\\bin\\"))
 		{
 			res.insert("C:\\Flow\\bin\\" + file.path().filename().string());
 		}
@@ -57,10 +59,10 @@ public:
 	{
 		try
 		{
-			ifstream t(path);
+			std::ifstream t(path);
 			if (t)
 			{
-				ostringstream buffer;
+				std::ostringstream buffer;
 				buffer << t.rdbuf();
 				string str = buffer.str();
 
@@ -71,10 +73,10 @@ public:
 
 			return "";
 		}
-		catch (exception e)
+		catch (std::exception e)
 		{
 			if (debug)
-				cout << "an unexpected error has occured while trying to open the file." << endl;
+				std::cout << "an unexpected error has occured while trying to open the file." << std::endl;
 			return "";
 		}
 	}
@@ -83,7 +85,7 @@ public:
 	{
 		try
 		{
-			ofstream s(path);
+			std::ofstream s(path);
 
 			s << placeholder + cont;
 
@@ -91,10 +93,10 @@ public:
 
 			return true;
 		}
-		catch (exception e)
+		catch (std::exception e)
 		{
 			if (debug)
-				cout << "exce:" << e.what() << endl;
+				std::cout << "exce:" << e.what() << std::endl;
 			return false;
 		}
 	}
@@ -139,6 +141,19 @@ inline bool _compile(string fc, bool runCompileAfter)
 	return true;
 }
 int main(int argc, char* argv[]) {
-	_compile(fileManager::readFileIntoString(argv[1]), false);
-	return 1;
+	try {
+		_compile(fileManager::readFileIntoString(argv[1]), false);
+	}
+	catch (marine::errors::MError& m) {
+
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); //grab console HANDLE
+
+
+
+		SetConsoleTextAttribute(hConsole, 0x0004); //set color to a red, change to yellow or green for other messages;
+		std::cout << "[ERROR]" << m.what() << std::endl;
+		SetConsoleTextAttribute(hConsole, 15); // reset color val to white default terminal
+		return EXIT_FAILURE;
+	}
+	return EXIT_SUCCESS;
 }
