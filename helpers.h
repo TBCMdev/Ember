@@ -27,6 +27,10 @@ namespace marine {
 			t.value == "<=") return true;
 		else return false;
 	}
+	static bool isAndOrOp(lexertk::token& t) {
+		if (t.value == "and" || t.value == "or" || t.value == "&&" || t.value == "||") return true;
+		return false;
+	}
 	static bool isFloat(lexertk::token& t) {
 		bool dec = false;
 		for (char c : t.value) {
@@ -41,6 +45,9 @@ namespace marine {
 		std::cout << "first:" << s.value[0] << "last: " << s.value.back() << std::endl;
 		if ((s.value[0] != '"' && s.value[0] != '\'') || (s.value.back() != '"' && s.value.back() != '\'')) return false;
 		return true;
+	}
+	static bool isBool(lexertk::token& t) {
+		if (t.value == "true" || t.value == "false") return true;
 	}
 	static bool isInt(lexertk::token& t) {
 		for (char c : t.value) {

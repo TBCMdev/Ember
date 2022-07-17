@@ -15,6 +15,7 @@ public:
 		INT,
 		FLOAT,
 		STRING,
+		BOOL,
 		CUSTOM,
 		UNKNWN
 	};

@@ -145,10 +145,12 @@
   <ItemGroup>
     <ClInclude Include="Base.h" />
     <ClInclude Include="helpers.h" />
+    <ClInclude Include="inb.h" />
     <ClInclude Include="lexertk.hpp" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="MError.h" />
     <ClInclude Include="Parser.h" />
+    <ClInclude Include="Types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

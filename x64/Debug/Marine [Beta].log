@@ -1,2 +1,16 @@
 ﻿  Marine [Beta].cpp
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(16,1): warning C4005: 'DEBUG': macro redefinition
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(8): message : see previous definition of 'DEBUG'
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(50,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(698,20): warning C4018: '<=': signed/unsigned mismatch
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(428,29): warning C4101: 'ig': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(618): message : see reference to function template instantiation 'Type marine::Parser::parseFuncCall<std::any>(void)' being compiled
+          with
+          [
+              Type=std::any
+          ]
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(140): warning C4172: returning address of local variable or temporary: null
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(148): warning C4172: returning address of local variable or temporary: null
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(521): warning C4715: 'marine::Parser::parseFuncCall<std::any>': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(521): warning C4715: 'marine::Parser::parseFuncCall<marine::VContainer>': not all control paths return a value
   Marine [Beta].vcxproj -> C:\Users\krist\source\repos\Marine [Beta]\x64\Debug\Marine [Beta].exe

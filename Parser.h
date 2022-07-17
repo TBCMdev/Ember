@@ -87,6 +87,101 @@ namespace marine {
 			}
 			return false;
 		}
+		bool parseBoolExprExt() {
+			//current is '('
+			std::vector<Node> operationStack;
+			std::vector<Operator> operatorStack;
+			bool br = false;
+			bool negate_next_node = false;
+			while (canAdvance()) {
+				bool wants = true;
+				DEBUG("checking: " + cur().value);
+				if (Base::is(cur(), "!")) {
+					wants = false;
+				}
+				else if (isInt(cur())) {
+					operationStack.push_back(Node(cur(), Base::Decl::INT, negate_next_node));
+					if (negate_next_node) negate_next_node = false;
+
+					DEBUG("creating node:" + operationStack.back().repr());
+					DEBUG("checking next:" + getNext().value);
+					if (!isOp(getNext()) || !isLogicalOp(getNext()) || isAndOrOp(getNext())) {
+						std::cout << ("is not op:" + getNext().value);
+						br = true;
+					}
+					else std::cout << ("is op:" + getNext().value);
+
+				}
+				else if (isFloat(cur())) {
+					DEBUG("identified float:" + cur().value);
+					DEBUG("checking next:" + getNext().value);
+					operationStack.push_back(Node(cur(), Base::Decl::FLOAT, negate_next_node));
+					if (negate_next_node) negate_next_node = false;
+					if (!isOp(getNext()) || !isLogicalOp(getNext()) || isAndOrOp(getNext())) {
+						std::cout << ("is not op:" + getNext().value);
+						br = true;
+					}
+					else std::cout << ("is op:" + getNext().value);
+
+				}
+				else if (isString(cur())) {
+					DEBUG("identified String:" + cur().value);
+					DEBUG("checking next:" + getNext().value);
+					operationStack.push_back(Node(cur(), Base::Decl::STRING, negate_next_node));
+					if (negate_next_node) negate_next_node = false;
+					if (!isOp(getNext()) || !isLogicalOp(getNext()) || isAndOrOp(getNext())) {
+						std::cout << ("is not op:" + getNext().value);
+						br = true;
+					}
+					else std::cout << ("is op:" + getNext().value);
+				}
+				else if (isFuncCall()) {
+					marine::VContainer v = parseFuncCall<marine::VContainer>();
+
+					operationStack.push_back(Node(lexertk::token(v.getStringified()), v.type(), negate_next_node));
+					if (negate_next_node) negate_next_node = false;
+					if (!isOp(getNext()) || !isLogicalOp(getNext()) || isAndOrOp(getNext())) {
+						std::cout << ("is not op:" + getNext().value);
+						br = true;
+					}
+				}
+				else if (Base::is(cur(), "(")) {
+					operationStack.push_back(brEval(negate_next_node));
+					advance();
+					if (!isOp(cur()) || !isLogicalOp(getNext()) || isAndOrOp(getNext())) {
+						br = true;
+					}
+					if (negate_next_node) negate_next_node = false;
+				}
+				else if (isOp(cur())) {
+					if ((operationStack.size() < 1 || operatorStack.size() >= 1) && (Base::is(cur(), "-") || Base::is(cur(), "+"))) {
+						DEBUG("found negator op:" + cur().value);
+						negate_next_node = true;
+					}
+					else {
+						DEBUG("pushing op:" + cur().value);
+						operatorStack.push_back(Operator(cur()));
+					}
+				}
+
+				if (operatorStack.size() > 0 && operationStack.size() > 1) {
+					Node right = operationStack.back();
+					operationStack.pop_back();
+					Node left = operationStack.back();
+					operationStack.pop_back();
+					Operator op = operatorStack.back();
+					operatorStack.pop_back();
+					Node n(left, op, right);
+					//DEBUG("creating node:" + n.repr());
+					std::cout << n.repr() << std::endl;
+					operationStack.push_back(Node(left, op, right));
+				}
+				for (auto& x : operatorStack) DEBUG("opers on stack:" + x.str());
+				for (auto& x : operationStack) DEBUG("nodes on stack:" + x.repr());
+				if (br)  break;
+				advance();
+			}
+		}
 		template<typename Type>
 		Type parseExt(Base::Decl decl = Base::Decl::UNKNWN) {
 			advance();
@@ -132,6 +227,17 @@ namespace marine {
 						}
 						else if (right == nullptr) {
 							right = new Node(cur(), Base::Decl::STRING, negate_next_node_recr);
+							if (negate_next_node_recr) negate_next_node_recr = false;
+
+						}
+					}
+					else if (isBool(cur())) {
+						if (left == nullptr) {
+							left = new Node(cur(), Base::Decl::BOOL, negate_next_node_recr);
+							if (negate_next_node_recr) negate_next_node_recr = false;
+						}
+						else if (right == nullptr) {
+							right = new Node(cur(), Base::Decl::BOOL, negate_next_node_recr);
 							if (negate_next_node_recr) negate_next_node_recr = false;
 
 						}
@@ -592,15 +698,34 @@ namespace marine {
 		if (brc != 0) throw marine::errors::SyntaxError("expected ')' at end of if condition.");
 		
 		if (!ifop) {
-			bool ret = parseExt<bool>();
+			bool ret = parseBoolExprExt();
 
 			if (!ret) {
 				//skip to end of }
 				bool fobr = false;
 				bool fcbr = false;
+
+				int cbr = 0;
 				while (canAdvance()) {
-					if (!fobr && Base::is(cur(), "{")) fobr = true;
+					advance();
+					if (Base::is(cur(), "{")) {
+						if(!fobr) fobr = true;
+						cbr++;
+					}
+					else if (Base::is(cur(), "}")) {
+						if (!fobr) throw marine::errors::SyntaxError("unexpected token: '}'");
+						cbr--;
+					}
+				
+					if(Base::is(cur(), "}") && cbr == 0) break;
+
+
 				}
+				if (!Base::is(cur(), "}")) throw marine::errors::SyntaxError("expected closing '}'");
+				//current should be '}'
+			}
+			else {
+				DEBUG("condition is true:" + cur().value);
 			}
 		}
 	}

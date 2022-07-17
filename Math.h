@@ -158,6 +158,8 @@ namespace marine {
 						return negated ? -stof(getToken().value) : stof(getToken().value);
 					case Base::Decl::STRING:
 						return marine::String(getToken().value);
+					case Base::Decl::BOOL:
+						return (getToken().value == "true" ? true : getToken().value == "false" ? false : throw marine::errors::SyntaxError("could not convert variable to type of 'bool'"));
 					default:
 						throw marine::errors::MError("something unexpected happened.");
 					}

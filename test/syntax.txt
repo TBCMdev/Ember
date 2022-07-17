@@ -49,3 +49,14 @@ int __func()
 	m = nullref //will throw error, a variable that is not a refrence cannot be nullref
 
 }
+
+
+--if statements--
+
+if(condition<bool>)
+
+if(value<type> (operator) value<type>)
+
+if(?value) //checks if the value is not null
+
+if(^ (and | or) ^ )// ^ = any above
