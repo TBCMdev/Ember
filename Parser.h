@@ -18,6 +18,7 @@ constexpr bool MARINE__DEBUG = true;
 
 using namespace marine;
 using namespace marine::ext;
+using namespace marine::out;
 namespace marine {
 	template <typename T>
 	std::string anyToStr(T& t) {
@@ -73,6 +74,12 @@ namespace marine {
 			}
 			if(Base::is(getNext(), "(")) return isFuncCall();
 		}
+		bool isVariable() {
+			for (auto& x : core_variables) {
+				if (x.getName() == cur().value) return true;
+			}
+			return false;
+		}
 		bool isFuncCall() {
 			DEBUG("checking func:" + cur().value);
 			if (Base::is(getNext(), "(")) {
@@ -93,8 +100,11 @@ namespace marine {
 			std::vector<Operator> operatorStack;
 			bool br = false;
 			bool negate_next_node = false;
+			bool wants = true;
+
+			bool hasComparitorOp = false;
+
 			while (canAdvance()) {
-				bool wants = true;
 				DEBUG("checking: " + cur().value);
 				if (Base::is(cur(), "!")) {
 					wants = false;
@@ -105,8 +115,8 @@ namespace marine {
 
 					DEBUG("creating node:" + operationStack.back().repr());
 					DEBUG("checking next:" + getNext().value);
-					if (!isOp(getNext()) || !isLogicalOp(getNext()) || isAndOrOp(getNext())) {
-						std::cout << ("is not op:" + getNext().value);
+					if (!isOp(getNext())) {
+						std::cout << ("is not op5:" + getNext().value);
 						br = true;
 					}
 					else std::cout << ("is op:" + getNext().value);
@@ -117,11 +127,14 @@ namespace marine {
 					DEBUG("checking next:" + getNext().value);
 					operationStack.push_back(Node(cur(), Base::Decl::FLOAT, negate_next_node));
 					if (negate_next_node) negate_next_node = false;
-					if (!isOp(getNext()) || !isLogicalOp(getNext()) || isAndOrOp(getNext())) {
-						std::cout << ("is not op:" + getNext().value);
+					if (!isOp(getNext())) {
+						std::cout << ("is not op6:" + getNext().value);
 						br = true;
 					}
 					else std::cout << ("is op:" + getNext().value);
+
+				}
+				else if (isVariable()) {
 
 				}
 				else if (isString(cur())) {
@@ -130,7 +143,7 @@ namespace marine {
 					operationStack.push_back(Node(cur(), Base::Decl::STRING, negate_next_node));
 					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext()) || !isLogicalOp(getNext()) || isAndOrOp(getNext())) {
-						std::cout << ("is not op:" + getNext().value);
+						std::cout << ("is not op7:" + getNext().value);
 						br = true;
 					}
 					else std::cout << ("is op:" + getNext().value);
@@ -140,15 +153,15 @@ namespace marine {
 
 					operationStack.push_back(Node(lexertk::token(v.getStringified()), v.type(), negate_next_node));
 					if (negate_next_node) negate_next_node = false;
-					if (!isOp(getNext()) || !isLogicalOp(getNext()) || isAndOrOp(getNext())) {
-						std::cout << ("is not op:" + getNext().value);
+					if (!isOp(getNext())) {
+						std::cout << ("is not op8:" + getNext().value);
 						br = true;
 					}
 				}
 				else if (Base::is(cur(), "(")) {
-					operationStack.push_back(brEval(negate_next_node));
+					//operationStack.push_back(brEval(negate_next_node));
 					advance();
-					if (!isOp(cur()) || !isLogicalOp(getNext()) || isAndOrOp(getNext())) {
+					if (!isOp(cur())) {
 						br = true;
 					}
 					if (negate_next_node) negate_next_node = false;
@@ -163,6 +176,13 @@ namespace marine {
 						operatorStack.push_back(Operator(cur()));
 					}
 				}
+				else if (isLogicalOp(cur())) {
+					hasComparitorOp = true;
+					br = true;
+				}
+				else {
+					st_spr(cur().value,STATUS::WARN);
+				}
 
 				if (operatorStack.size() > 0 && operationStack.size() > 1) {
 					Node right = operationStack.back();
@@ -176,11 +196,17 @@ namespace marine {
 					std::cout << n.repr() << std::endl;
 					operationStack.push_back(Node(left, op, right));
 				}
-				for (auto& x : operatorStack) DEBUG("opers on stack:" + x.str());
-				for (auto& x : operationStack) DEBUG("nodes on stack:" + x.repr());
+				for (auto& x : operatorStack) DEBUG("opers on bool stack:" + x.str());
+				for (auto& x : operationStack) DEBUG("nodes on bool stack:" + x.repr());
 				if (br)  break;
 				advance();
 			}
+			std::cout << "cur after break:" << cur().value;
+
+			return true;
+
+
+
 		}
 		template<typename Type>
 		Type parseExt(Base::Decl decl = Base::Decl::UNKNWN) {
@@ -280,7 +306,7 @@ namespace marine {
 					DEBUG("creating node:" + operationStack.back().repr());
 					DEBUG("checking next:" + getNext().value);
 					if (!isOp(getNext())) {
-						std::cout << ("is not op:" + getNext().value);
+						std::cout << ("is not op1:" + getNext().value);
 						br = true;
 					}else std::cout << ("is op:" + getNext().value);
 
@@ -291,7 +317,7 @@ namespace marine {
 					operationStack.push_back(Node(cur(), Base::Decl::FLOAT, negate_next_node));
 					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext())) {
-						std::cout << ("is not op:" + getNext().value);
+						std::cout << ("is not op2:" + getNext().value);
 						br = true;
 					}else std::cout << ("is op:" + getNext().value);
 
@@ -302,7 +328,7 @@ namespace marine {
 					operationStack.push_back(Node(cur(), Base::Decl::STRING, negate_next_node));
 					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext())) {
-						std::cout << ("is not op:" + getNext().value);
+						std::cout << ("is not op3:" + getNext().value);
 						br = true;
 					}
 					else std::cout << ("is op:" + getNext().value);
@@ -313,7 +339,7 @@ namespace marine {
 					operationStack.push_back(Node(lexertk::token(v.getStringified()), v.type(), negate_next_node));
 					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext())) {
-						std::cout << ("is not op:" + getNext().value);
+						std::cout << ("is not op4:" + getNext().value);
 						br = true;
 					}
 				}
@@ -498,7 +524,6 @@ namespace marine {
 
 			//DEBUG("found function: " + f->getName());
 			if (f != nullptr) {
-				DEBUG("f != nullptr.");
 				int nbr_i = 0;
 				while (canAdvance()) {
 					advance();
@@ -680,7 +705,7 @@ namespace marine {
 		return Base::is(cur(), "if");
 	}
 
-	void parseIfStatement() {
+	void parseLogicalStatement() {
 		advance();
 		if (!Base::is(cur(), "(")) throw marine::errors::SyntaxError("expected '(' after if statement.");
 		advance();
@@ -695,38 +720,35 @@ namespace marine {
 			}
 			else if (Base::is(gen[i], ")") && brc == 0) break;
 		}
-		if (brc != 0) throw marine::errors::SyntaxError("expected ')' at end of if condition.");
+		if (brc != 0) throw marine::errors::SyntaxError("expected ')' at end of logical condition.");
 		
-		if (!ifop) {
-			bool ret = parseBoolExprExt();
+		if (!parseBoolExprExt()) {
+			//skip to end of }
+			bool fobr = false;
+			bool fcbr = false;
 
-			if (!ret) {
-				//skip to end of }
-				bool fobr = false;
-				bool fcbr = false;
-
-				int cbr = 0;
-				while (canAdvance()) {
-					advance();
-					if (Base::is(cur(), "{")) {
-						if(!fobr) fobr = true;
-						cbr++;
-					}
-					else if (Base::is(cur(), "}")) {
-						if (!fobr) throw marine::errors::SyntaxError("unexpected token: '}'");
-						cbr--;
-					}
-				
-					if(Base::is(cur(), "}") && cbr == 0) break;
-
-
+			int cbr = 0;
+			while (canAdvance()) {
+				advance();
+				if (Base::is(cur(), "{")) {
+					if (!fobr) fobr = true;
+					cbr++;
 				}
-				if (!Base::is(cur(), "}")) throw marine::errors::SyntaxError("expected closing '}'");
-				//current should be '}'
+				else if (Base::is(cur(), "}")) {
+					if (!fobr) throw marine::errors::SyntaxError("unexpected token: '}'");
+					cbr--;
+				}
+
+				if (Base::is(cur(), "}") && cbr == 0) { advance(); break; }
+
+
 			}
-			else {
-				DEBUG("condition is true:" + cur().value);
-			}
+			if (!Base::is(cur(), "}")) throw marine::errors::SyntaxError("expected closing '}'");
+			//current should be '}'
+		}
+		else {
+			DEBUG("condition is true:" + cur().value);
+			advance();
 		}
 	}
 #pragma endregion
@@ -736,6 +758,10 @@ namespace marine {
 			if (isDecl()) {
 				DEBUG("is decl:" + cur().value);
 				parseDecl();
+			}
+			else if (isIfStatement()) {
+				DEBUG("is if:" + cur().value);
+				parseLogicalStatement();
 			}
 			else if (isFuncCall()) {
 				DEBUG("is func call:" + cur().value);
@@ -751,9 +777,6 @@ namespace marine {
 				DEBUG("is func decl:" + cur().value);
 
 				skipFuncDecl();
-			}
-			else if (isIfStatement()) {
-				parseIfStatement();
 			}
 
 			advance();

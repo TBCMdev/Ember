@@ -1,4 +1,4 @@
-string myreturnstring = ask("what is your favorite color: ") + 4
+string myreturnstring = ask("what is your favorite color: ")
 
 if (myreturnstring == "green"){
 	log("i dont like green.")

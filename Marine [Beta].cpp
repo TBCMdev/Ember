@@ -11,14 +11,12 @@
 #include "lexertk.hpp"
 #include "Parser.h"
 #include "inb.h"
+#include "helpers.h"
 #include <Windows.h>
-
-
-
+#include <stdio.h>
+#include <conio.h>
 static bool USING_GAME_LIB = false;
 static bool debug = false;
-
-
 
 
 class fileManager
@@ -145,15 +143,12 @@ int main(int argc, char* argv[]) {
 		_compile(fileManager::readFileIntoString(argv[1]), false);
 	}
 	catch (marine::errors::MError& m) {
-
-		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); //grab console HANDLE
-
-
-
-		SetConsoleTextAttribute(hConsole, 0x0004); //set color to a red, change to yellow or green for other messages;
-		std::cout << "[ERROR]" << m.what() << std::endl;
-		SetConsoleTextAttribute(hConsole, 15); // reset color val to white default terminal
+		std::string ref("[ERROR] ");
+		ref.append(m.what());
+		marine::out::st_spr(ref, marine::out::STATUS::ERR);
 		return EXIT_FAILURE;
 	}
+	marine::out::stpr("\nscript finished successfully... (press any key to close this window)", marine::out::STATUS::GOOD);
+	while (!_kbhit()) {};
 	return EXIT_SUCCESS;
 }

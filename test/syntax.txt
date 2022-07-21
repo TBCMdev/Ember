@@ -53,10 +53,39 @@ int __func()
 
 --if statements--
 
-if(condition<bool>)
+#1 = if(condition<bool>)
 
-if(value<type> (operator) value<type>)
+#2 = if(value<type> (operator) value<type>)
 
-if(?value) //checks if the value is not null
+#3 = if(?value) //checks if the value is not null
 
-if(^ (and | or) ^ )// ^ = any above
+#4 = if(^ (and | or) ^ )// ^ = any above
+
+--approaching if statements--
+
+VContainer left;
+Operator op = null;
+VContainer right = null;
+
+finds 'if' -> 
+	left = () => {
+		finds '(' -> return VContainer of everything parsed before comparison operator
+		else ERR
+	} ->
+	finds LOGICALOP -> 
+		op = () => {-> parse and return Operator } ->
+		right = () => {return VContainer of everything parsed after comparison op and before last ')'} ->
+		skip to token after '{' ->
+		BREAK
+	else: 
+		return bool expr #1 then END
+
+
+	CREATE BoolExpr obj(left, op, right)
+
+	call BoolExpr.evaluate()
+
+	parse result, if true:
+		continue parse
+	else:
+		skip to end of '}' and return

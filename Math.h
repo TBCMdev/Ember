@@ -79,6 +79,47 @@ namespace marine {
 			bool isValid() { return type != OPTYPE::UNKNWN; }
 			lexertk::token& get() { return _t; }
 		};
+		class BoolExpr {
+		protected:
+			lexertk::token t;
+			std::shared_ptr<Node> left = nullptr;
+			std::shared_ptr<Operator> oper = nullptr;
+			std::shared_ptr<Node> right = nullptr;
+			bool negated = false;
+		public:
+			Base::Decl type;
+			void negate() {
+				negated = true;
+			}
+			bool isNegated() { return negated; }
+			lexertk::token& getToken() { return t; }
+			Node* getLeft() { return left.get(); }
+			Node* getRight() { return right.get(); }
+			virtual std::string repr() {
+				if (right != nullptr && left != nullptr) {
+					if (oper != nullptr) {
+						return std::string("left: (" + left->repr() + ") right: (" + right->repr() + ")" + ", operator: '" + oper->str() + "', negative: " + (negated ? "Y" : "N"));
+					}
+					return std::string("left: (" + left->repr() + ") right: (" + right->repr() + "), negative: " + (negated ? "Y" : "N"));
+				}
+				return std::string("val: " + (negated ? "-" + t.value : t.value) + ", type: '" + Base::declStr(type) + "'");
+			}
+			bool evaluate() {
+				Base::Decl rootLeft = Node::getRootNodeType(left.get(), true);
+				Base::Decl rootRight = Node::getRootNodeType(right.get(), false);
+
+				void* l, * r;
+
+				if (l == r) {
+
+				}
+				switch (rootLeft) {
+				case Base::Decl::INT:
+					int l = std::any_cast<int>(left->calc());
+				}
+
+			}
+		};
 		class Node {
 		protected:
 			lexertk::token t;

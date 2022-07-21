@@ -8,8 +8,7 @@ public:
 		INT,
 		FLOAT,
 		STRING,
-		CUSTOM,
-		VOID
+		CUSTOM
 	};
 	enum class Decl {
 		INT,
