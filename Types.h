@@ -1,105 +1,78 @@
 #pragma once
 #include "Base.h"
+#include "VContainer.h"
+#include "ObjectHandler.h"
+#include "Variable.h"
 namespace marine {
-	class String {
-		std::string value;
+	template<typename VContainerList>
+	static VContainerList sliceFromLeft(VContainerList& v, int from) {
+		return VContainerList(v.begin() + from, v.end());
+	}
 
+	template<typename VContainerList>
+	static VContainerList sliceFromRight(VContainerList& v, int from) {
+		return VContainerList(v.begin(), v.end() - from);
+	}
 
+	template<typename VContainerList>
+	static VContainerList sliceBetween(VContainerList& v, int from, int to) {
+		return VContainerList(v.begin() + from, v.end() - to);
+	}
+
+	
+	class ListOperator {
 	public:
-		static std::string trim(std::string& s) {
-			if(s[0] == '"' || s[0] == '\'')
-				s.erase(0, 1);
-			if(s.back() == '"' || s.back() == '\'')
-				s.erase(s.length() - 1);
-
-			return s;
-		}
-		String():value("") {}
-		String(std::string s): value(String::trim(s)){}
-		String(const char* c): value(c){}
-		std::string& get() { return value; }
-	};
-	std::string operator +(String first, std::string sec) 
-	{
-		return first.get() + sec;
-	}
-	std::string operator +(std::string first, String sec)
-	{
-		return sec.get() + first;
-	}
-	std::string operator +(String first, String sec)
-	{
-		return first.get() + sec.get();
-	}
-	class VContainer {
-		std::any _value;
-		std::string placeHolder;
-		unsigned int depth;
-		Base::Decl decl = Base::Decl::UNKNWN;
-		std::vector <Base::DeclConfig> configs;
-	public:
-		VContainer(std::any a, unsigned int dep, Base::Decl decl, std::vector<Base::DeclConfig> d = {}): _value(a), depth(dep), decl(decl), configs(d){}
-		VContainer():_value(nullptr), depth(-1), configs({}) {}
-		template <typename T>
-		T cast() {
-			return std::any_cast<T>(_value);
-		}
-		void setPlaceholder(std::string s) { placeHolder = s; }
-		std::string& getStringified() { return placeHolder; }
-		std::any& get() { return _value; }
-		void set(std::any& a, Base::Decl _new, int dep) { _value = a; decl = _new; depth = dep; }
-		Base::Decl type() { return decl; }
-	};
-	class Variable {
+		enum class LOType {
+			DEFAULT,
+			LRSLICE,
+			LSLICE,
+			RSLICE
+		};
 	protected:
-		std::any _value;
-		std::string name;
-		lexertk::token orig;
-		unsigned int __depth = 0;
-		Base::Decl decl = Base::Decl::UNKNWN;
-		std::vector <Base::DeclConfig> configs;
-		bool __hasToken = true;
-		std::string configsStr() {
-			std::stringstream stream;
-			stream << "[";
-
-			for (size_t i = 0; i < configs.size(); ++i) {
-				stream << Base::declCStr(configs[i]);
-				if (i + 1 < configs.size()) stream << ", ";
-			}
-			return stream.str() + "]";
-		}
+		bool slice = false;
+		LOType type;
 	public:
-		Variable(std::string& _name, std::any val, lexertk::token& _orig, std::vector <Base::DeclConfig> _configs) : orig(_orig), _value(val), name(_name), configs(_configs)
-		{
+		std::shared_ptr<int> left, right;
+
+		ListOperator(int* i = nullptr, bool slice = false, int* r = nullptr) : left(i), right(r) {
+			// l[? ?: ?]
+			type = slice ? (i == nullptr ? LOType::RSLICE : r == nullptr ? LOType::LSLICE : LOType::LRSLICE) : LOType::DEFAULT;
+			std::cout << "determined slice: " << (int)type << std::endl;
 		}
-		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs) : __hasToken(false), _value(val), name(_name), configs(_configs)
-		{
-		}
-		Variable(std::string& _name, std::any val, std::string _origStr, std::vector <Base::DeclConfig> _configs) : orig(_origStr), __hasToken(false), _value(val), name(_name), configs(_configs)
-		{
-		}
-		int getDepth() { return __depth; }
-		void setDepth(unsigned int depth) { __depth = depth; }
-		void setDecl(Base::Decl d) { decl = d; }
-		Base::Decl getDecl() { return decl; }
-		std::any& getValue() { return _value; }
-		void setValue(std::any& a, Base::Decl d) { _value = a; decl = d; }
-		void setValue(VContainer& v) { _value = v.get(); decl = v.type(); }
-		std::string& getName() { return name; }
-		template <typename T>
-		T cast() {
-			return std::any_cast<T>(_value);
-		}
-		bool is(Base::DeclConfig d) {
-			return std::count(configs.begin(), configs.end(), d) != 0;
-		}
-		std::any& setValue(std::any x) { _value = x; return x; }
-		lexertk::token& getToken() { return orig; }
-		std::string str() {
-			return std::string("[var] name: " + name + ", val=" + orig.value + ", decl_type: " + Base::declStr(decl) + ", configurations: " + configsStr());
+		bool hasSlice() { return slice; }
+		LOType getType() {
+			return type;
 		}
 	};
+	class ArrayList {
+	protected:
+		std::vector<VContainer> items;
+		std::vector<Base::Decl> types;
+		int size = -1;
+	public:
+		ArrayList(std::vector<VContainer> _items = {}, int _size = -1) : items(_items), size(_size){
+		}
+		ArrayList(std::vector<Base::Decl> v): types(v) {
+
+		}
+		void add(VContainer& item) {
+			items.push_back(item);
+		}
+		VContainer get(int l) {
+			return items[l];
+		}
+		std::vector<VContainer> operateLarge(ListOperator op) {
+			switch (op.getType()) {
+			case ListOperator::LOType::LSLICE:
+				return sliceFromLeft(items, *op.left);
+			case ListOperator::LOType::RSLICE:
+				return sliceFromRight(items, *op.right);
+			case ListOperator::LOType::LRSLICE:
+				return sliceBetween(items, *op.left, *op.right);
+			}
+		}
+	};
+	
 	class Function {
 	protected:
 		std::string name;
@@ -115,4 +88,10 @@ namespace marine {
 		int getEnd() { return end_index; }
 
 	};
+	struct EXPRDATA {
+		bool negated;
+		bool simnull;
+	};
+
+	
 };

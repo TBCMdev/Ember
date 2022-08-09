@@ -2,16 +2,37 @@
 #include <iostream>
 #include <string>
 #include <Windows.h>
+#include <vector>
 #include "lexertk.hpp"
-#include "Base.h"
 namespace marine {
 #pragma region helpers
+	template<int N, typename... Ts>
+	using NthTypeOf = typename std::tuple_element<N, std::tuple<Ts...>>::type;
+
+
+
+	template <typename... Result, std::size_t... Indices>
+	auto vec_to_tup_helper(const std::vector<std::any>& v, std::index_sequence<Indices...>) {
+		return std::make_tuple(
+			std::any_cast<NthTypeOf<Indices, Result...>>(v[Indices])...
+		);
+	}
+
+	template <typename ...Result>
+	std::tuple<Result...> cast(std::vector<std::any>& values)
+	{
+		return vec_to_tup_helper<Result...>(values, std::make_index_sequence<sizeof...(Result)>());
+	}
+	
+
+
 	static bool isOp(lexertk::token& t) {
 		if (t.value == "+" ||
 			t.value == "-" ||
 			t.value == "*" ||
 			t.value == "/" ||
 			t.value == "%" ||
+			t.value == "=" ||
 			t.value == "+=" ||
 			t.value == "-=" ||
 			t.value == "*=" ||
@@ -43,7 +64,6 @@ namespace marine {
 		return true;
 	}
 	static bool isString(lexertk::token& s) {
-		std::cout << "first:" << s.value[0] << "last: " << s.value.back() << std::endl;
 		if ((s.value[0] != '"' && s.value[0] != '\'') || (s.value.back() != '"' && s.value.back() != '\'')) return false;
 		return true;
 	}

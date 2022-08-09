@@ -2,6 +2,11 @@
 #include <iostream>
 #include <string>
 #include "helpers.h"
+
+constexpr bool MARINE__DEBUG = true;
+
+
+
 class Base {
 public:
 	enum class RetDecl {
@@ -15,6 +20,9 @@ public:
 		FLOAT,
 		STRING,
 		BOOL,
+		LIST,
+		DYNAMIC_OBJECT,
+		STATIC_OBJECT,
 		CUSTOM,
 		UNKNWN
 	};
@@ -62,10 +70,13 @@ public:
 		return DeclConfig::NONE;
 	}
 	const static Decl declareParse(lexertk::token& t) {
-		std::cout << "determining: " << t.value << std::endl;
+		//std::cout << "determining: " << t.value << std::endl;
 		if (t.value == "int") return Decl::INT;
 		if (t.value == "float") return Decl::FLOAT;
 		if (t.value == "string") return Decl::STRING;
+		if (t.value == "bool") return Decl::BOOL;
+		if (t.value == "list") return Decl::LIST;
+		if (t.value == "object") return Decl::DYNAMIC_OBJECT;
 		return Decl::UNKNWN;
 	}
 	static bool is(lexertk::token& t, const char* x) {

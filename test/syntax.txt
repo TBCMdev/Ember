@@ -63,13 +63,15 @@ int __func()
 
 --approaching if statements--
 
-VContainer left;
+BoolExpr left;
 Operator op = null;
-VContainer right = null;
+BoolExpr right = null;
 
 finds 'if' -> 
 	left = () => {
-		finds '(' -> return VContainer of everything parsed before comparison operator
+		finds '(' -> () => { 
+			return VContainer of everything parsed before comparison operator
+		}
 		else ERR
 	} ->
 	finds LOGICALOP -> 
@@ -89,3 +91,57 @@ finds 'if' ->
 		continue parse
 	else:
 		skip to end of '}' and return
+
+--while statements--
+
+while(boolExpr){}
+
+
+
+
+--ARRAYS--
+
+ARRAY (LIST):
+
+	list[?][?:int] <name> ?= [?]
+
+	list[?] <name>[?:int]
+
+	list mymixedarray = [1, 1.245, "test"] -> accepts any type
+
+	list[int] myfixedarray = [1, 3 , 4, 66] -> accepts any type in the container specifier
+
+	list[^] myfixedsizearray[2] = [1, 2, 3] -> accepts an integer to specify the size
+
+	--ARRAY ACCESSIBILITY--
+
+	list mylist[1+] // must always contain 2 or more items
+
+	list mylist[1-] // must always contain 2 or less items
+
+	--accessing arrays--
+
+
+	mylist[:4] //splicing
+
+	mylist[4:]
+
+	mylist[4::]
+
+
+--DYNAMIC OBJECTS--
+
+	object <name> ?= 
+	{
+		<key>:name : <value>:type , ? repeat
+	}
+
+	object myobject = {ip: '192.168.0.1', port: 4444}
+
+--TUPLES--
+
+	tuple[list: type[1+]] <name> ?= tuple(list:val) 
+
+
+	tuple[int, string] mytuple = tuple(1, "my tuple string")
+

@@ -1,0 +1,15 @@
+﻿  Marine [Beta].cpp
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\Types.h(317,28): warning C4091: 'static ': ignored on left of 'marine::ObjectHandler' when no variable is declared
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\Types.h(351,3): warning C4091: 'static ': ignored on left of 'marine::ObjectHandler' when no variable is declared
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\Parser.h(16,1): warning C4005: 'DEBUG': macro redefinition
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\Math.h(8): message : see previous definition of 'DEBUG'
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\helpers.h(56): warning C4715: 'marine::isBool': not all control paths return a value
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\inb.h(116): warning C4715: 'marine::inb::conversion::stringTo': not all control paths return a value
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\Math.h(653): warning C4715: 'marine::ext::BoolExpr::repr': not all control paths return a value
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\Math.h(711): warning C4715: 'marine::ext::BoolExpr::evaluate': not all control paths return a value
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\inb.h(147): warning C4172: returning address of local variable or temporary: null
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\inb.h(154): warning C4172: returning address of local variable or temporary: null
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\Parser.h(99): warning C4172: returning address of local variable or temporary: v
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\Parser.h(710): warning C4715: 'marine::Parser::parseFuncCall<std::any>': not all control paths return a value
+C:\Users\krist\OneDrive\Documents\GitHub\Marine\Parser.h(710): warning C4715: 'marine::Parser::parseFuncCall<marine::VContainer>': not all control paths return a value
+  Marine.vcxproj -> C:\Users\krist\OneDrive\Documents\GitHub\Marine\x64\Release\Marine.exe

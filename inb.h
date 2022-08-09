@@ -8,10 +8,14 @@
 #include <map>
 #include <variant>
 #include <tuple>
+#include "String.h"
+#define VCONTAINERFUNC marine::VContainer(*)(std::vector<std::any>)
+
 using std::string;
 
 
 namespace marine {
+
 	std::map<const char*, std::vector<const char*>> INBTREE = {
 		{"inb", {
 			"console",
@@ -27,9 +31,9 @@ namespace marine {
 #pragma region function_converters
 #pragma endregion
 #pragma region internal_backend
-		using Action = void* (*)(std::any []);
+		using Action = void* (*)(std::vector<std::any>);
 
-		using Function = marine::VContainer (*)(std::any[]);
+		using Function = marine::VContainer (*)(std::vector<std::any>);
 
 
 		struct IFunc {
@@ -37,16 +41,15 @@ namespace marine {
 			int _param_c = 0;
 			Base::RetDecl returnType;
 			std::vector<Base::Decl> paramDeclTypes;
-			std::any parameters[15] = {};
+			std::vector<std::any> parameters = {};
 		};
 		struct Callable {
 		public:
 			const char* name;
-			const char* parent_library = "NULL";
 			int parameter_count;
 			std::vector <Base::Decl> paramTypes;
 
-			virtual void call(std::any a[], marine::VContainer* v = nullptr) {
+			virtual void call(std::vector<std::any> a, marine::VContainer* v = nullptr) {
 				throw marine::errors::RuntimeError(" a callable cannot contain no callable item.");
 			}
 
@@ -55,29 +58,26 @@ namespace marine {
 			Action callable;
 
 
-			void call(std::any a[], marine::VContainer* ignored = nullptr) override {
+			void call(std::vector<std::any> a, marine::VContainer* ignored = nullptr) override {
 				callable(a);
 			}
 		public:
-			inb_action(const char* n, const char* parent, int param_c, std::vector<Base::Decl> param_types, Action c) : callable(c) {
+			inb_action(const char* n, int param_c, std::vector<Base::Decl> param_types, Action c) : callable(c) {
 				name = n;
-				parent_library = parent;
 				parameter_count = param_c;
 				paramTypes = param_types;
 			}
 		};
-		
 		struct inb_function: public Callable {
 			Function callable;
 
-			void call(std::any a[], marine::VContainer* v) override {
+			void call(std::vector<std::any> a, marine::VContainer* v) override {
 				
 				*v = callable(a);
 			}
 		public:
-			inb_function(const char* n, const char* parent, int param_c, std::vector<Base::Decl> param_types, Function c) : callable(c) {
+			inb_function(const char* n, int param_c, std::vector<Base::Decl> param_types, Function c) : callable(c) {
 				name = n;
-				parent_library = parent;
 				parameter_count = param_c;
 				paramTypes = param_types;
 			}
@@ -85,15 +85,15 @@ namespace marine {
 		};
 #pragma endregion
 		namespace console {
-			void log_s(std::any x[]) {
-				std::cout << std::any_cast<marine::String>(x[0]).get() << std::endl;
+			void log_s(std::vector<std::any> x) {
+				std::cout << std::any_cast<String>(x[0]).get() << std::endl;
 			}
-			void log_i(std::any f[]) {
+			void log_i(std::vector<std::any> f) {
 				std::cout << std::any_cast<int>(f[0]) << std::endl;
 
 			}
-			marine::VContainer ask(std::any a[]) {
-				auto str = std::any_cast<marine::String>(a[0]);
+			marine::VContainer ask(std::vector<std::any> a) {
+				auto [str] = cast<String>(a);
 
 				std::cout << str.get();
 
@@ -109,15 +109,14 @@ namespace marine {
 			}
 		};
 		std::vector <inb_action>__NO_INCLUDE_ACTIONS = {
-			{"log", "inb", 1, {Base::Decl::STRING},(void*(*)(std::any[]))inb::console::log_s},
-			{"log", "inb", 1, {Base::Decl::INT},(void* (*)(std::any[]))inb::console::log_i},
+			{"log", 1, {Base::Decl::STRING},(void*(*)(std::vector<std::any>))inb::console::log_s},
+			{"log", 1, {Base::Decl::INT},(void* (*)(std::vector<std::any>))inb::console::log_i},
 
 		};
 		std::vector<inb_function> __NO_INCLUDE_FUNCTIONS = {
-			{"ask", "inb", 1, {Base::Decl::STRING}, (marine::VContainer(*)(std::any[]))inb::console::ask}
+			{"ask", 1, {Base::Decl::STRING}, (VCONTAINERFUNC)inb::console::ask},
+			//temporary below:
 		};
-
-
 
 
 
@@ -135,16 +134,14 @@ namespace marine {
 			for (auto& v : __NO_INCLUDE_ACTIONS) {
 				if (v.name == name && v.paramTypes == paramTypes) { std::cout << "returning " << v.name << std::endl; return v; }
 			}
-			std::cout << "returning null..." << std::endl;
-			inb_action null{ "NULL", "NULL", 0,{},  nullptr };
+			inb_action null{ "NULL", 0,{},  nullptr };
 			return null;
 		}
 		inb_function& getNoIncludeFunctionByName(std::string& name, std::vector<Base::Decl> paramTypes) {
 			for (auto& v : __NO_INCLUDE_FUNCTIONS) {
 				if (v.name == name && v.paramTypes == paramTypes) return v;
 			}
-			std::cout << "returning null..." << std::endl;
-			inb_function null{ "NULL", "NULL", 0,{},  nullptr };
+			inb_function null{ "NULL", 0,{},  nullptr };
 			return null;
 		}
 		bool matchINBLibraryName(std::string& s) {
@@ -157,4 +154,6 @@ namespace marine {
 			return false;
 		}
 	}
-}
+
+	
+};

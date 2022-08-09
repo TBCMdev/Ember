@@ -37,16 +37,6 @@ public:
 		// MAIN LOGIC
 		return generator;
 	}
-	inline static std::set<string> readflowcppdep()
-	{
-		std::set<string> res;
-		for (const auto& file : std::filesystem::directory_iterator("C:\\Flow\\bin\\"))
-		{
-			res.insert("C:\\Flow\\bin\\" + file.path().filename().string());
-		}
-
-		return res;
-	}
 	static bool has_suffix(const std::string& str, const std::string& suffix)
 	{
 		return str.size() >= suffix.size() &&
@@ -135,7 +125,13 @@ inline bool _compile(string fc, bool runCompileAfter)
 {
 	lexertk::generator gen(fileManager::compile(fc, false));
 	marine::Parser p(gen);
-	p.parse();
+	p.advance();
+	while (p.canAdvance()) {
+		p.parse();
+	}
+	for (auto x : p.getVariables()) {
+		std::cout << x.str() << std::endl;
+	}
 	return true;
 }
 int main(int argc, char* argv[]) {
@@ -146,6 +142,11 @@ int main(int argc, char* argv[]) {
 		std::string ref("[ERROR] ");
 		ref.append(m.what());
 		marine::out::st_spr(ref, marine::out::STATUS::ERR);
+
+		marine::out::stpr("\nscript failed... (press any key to close this window)", marine::out::STATUS::ERR);
+		while (!_kbhit()) {};
+
+
 		return EXIT_FAILURE;
 	}
 	marine::out::stpr("\nscript finished successfully... (press any key to close this window)", marine::out::STATUS::GOOD);
