@@ -76,7 +76,7 @@ namespace marine {
 	class Function {
 	protected:
 		std::string name;
-		lexertk::token& start, end;
+		lexertk::token start, end;
 		int start_index, end_index;
 	public:
 		std::vector<Variable> parameters;
@@ -86,12 +86,20 @@ namespace marine {
 		std::string& getName() { return name; }
 		int getStart() { return start_index; }
 		int getEnd() { return end_index; }
-
+		std::string str() {
+			std::stringstream s("(MANUAL FUNCTION) name:");
+			s << name << ", start token:" << start.value << ", end token:" << end.value << ", variables from parameters:";
+			for (auto& x : parameters) {
+				s << x.str() << "\n";
+			}
+			return s.str();
+		}
 	};
+
+
+
 	struct EXPRDATA {
 		bool negated;
 		bool simnull;
 	};
-
-	
 };

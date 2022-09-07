@@ -13,10 +13,18 @@ public:
 
 		return s;
 	}
+	static String noTrim(std::string s) {
+		return String(s, false);
+	}
 	String() :value("") {}
-	String(std::string s) : value(String::trim(s)) {}
+	String(std::string s, bool trim = true) 
+	{ 
+		if (trim) value = String::trim(s);
+		else value = s; 
+	}
 	String(const char* c) : value(c) {}
 	std::string& get() { return value; }
+	std::string getCopy() { return value; }
 	void set(std::string& s) { value = s; }
 	void add(std::string& x) { value += x; }
 };

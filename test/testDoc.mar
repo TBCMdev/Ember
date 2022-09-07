@@ -1,4 +1,12 @@
-int myint = 92340384
+method myReturnMethod(int i){
+	int add = 2 + 2
 
 
-myint.digits()
+	return add
+}
+
+
+int myval = myReturnMethod(4)
+
+
+log(myval) 

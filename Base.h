@@ -3,7 +3,7 @@
 #include <string>
 #include "helpers.h"
 
-constexpr bool MARINE__DEBUG = true;
+constexpr bool MARINE__DEBUG = false;
 
 
 
@@ -58,6 +58,8 @@ public:
 			return "float";
 		case Decl::STRING:
 			return "string";
+		case Decl::DYNAMIC_OBJECT:
+			return "DYNAMIC object";
 		case Decl::CUSTOM:
 			return "custom";
 		default:
@@ -76,7 +78,7 @@ public:
 		if (t.value == "string") return Decl::STRING;
 		if (t.value == "bool") return Decl::BOOL;
 		if (t.value == "list") return Decl::LIST;
-		if (t.value == "object") return Decl::DYNAMIC_OBJECT;
+		if (t.value == "obj") return Decl::DYNAMIC_OBJECT;
 		return Decl::UNKNWN;
 	}
 	static bool is(lexertk::token& t, const char* x) {

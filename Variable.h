@@ -3,65 +3,43 @@
 #include <sstream>
 #include <any>
 #include <vector>
+#include <unordered_map>
+#include "MError.h"
 #include "Base.h"
 #include "VContainer.h"
+#include "ValueHolder.h"
 namespace marine {
 	class StaticObject;
-	class Variable {
+	class Variable : public ValueHolder {
 	protected:
-		std::string name = "NULL";
+		std::string name;
 		lexertk::token orig;
-		unsigned int __depth = 0;
-		Base::Decl decl = Base::Decl::UNKNWN;
-		std::vector <Base::DeclConfig> configs;
-
-		std::shared_ptr<StaticObject> connected_obj = nullptr;
-
-
-		bool __hasToken = true;
-		std::string configsStr() {
-			std::stringstream stream;
-			stream << "[";
-
-			for (size_t i = 0; i < configs.size(); ++i) {
-				stream << Base::declCStr(configs[i]);
-				if (i + 1 < configs.size()) stream << ", ";
-			}
-			return stream.str() + "]";
-		}
 	public:
-		std::any _value;
-		Variable(std::string& _name, std::any val, lexertk::token& _orig, std::vector <Base::DeclConfig> _configs) : orig(_orig), _value(val), name(_name), configs(_configs)
+		Variable(std::string& _name, std::any val, lexertk::token& _orig, std::vector <Base::DeclConfig> _configs) : orig(_orig), ValueHolder(val), name(_name)
 		{
+			configs = _configs;
 		}
-		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs) : __hasToken(false), _value(val), name(_name), configs(_configs)
+		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs) :ValueHolder(val), name(_name)
 		{
+			__hasToken = false;
+			configs = _configs;
 		}
-		Variable(std::string& _name, std::any val, std::string _origStr, std::vector <Base::DeclConfig> _configs) : orig(_origStr), __hasToken(false), _value(val), name(_name), configs(_configs)
+		Variable(std::string& _name, std::any val, std::string _origStr, std::vector <Base::DeclConfig> _configs) : orig(_origStr), ValueHolder(val), name(_name)
 		{
+			__hasToken = false;
+			configs = _configs;
 		}
-		int getDepth() { return __depth; }
-		void setDepth(unsigned int depth) { __depth = depth; }
-		void setDecl(Base::Decl d) { decl = d; }
-		Base::Decl getDecl() { return decl; }
-		std::any& getValue() { return _value; }
+		Variable(std::any val) : ValueHolder(val)
+		{
+			__hasToken = false;
+		}
 		void setToken(lexertk::token& t) { orig = t; };
 		void loseStringTrace() { orig = lexertk::token("UNTRACABLE"); }
-		void setValue(std::any a, Base::Decl d) { _value = a; decl = d; }
-		void setValue(VContainer& v) { _value = v.get(); decl = v.type(); }
-		std::string getName() { return name; }
 		template <typename T>
-		T cast() {
-			return std::any_cast<T>(_value);
-		}
-		std::shared_ptr<StaticObject> getObjSelf() { return connected_obj; }
-		void setObjSelf(StaticObject* o) { connected_obj = std::make_shared<StaticObject>(*o); }
-		bool is(Base::DeclConfig d) {
-			return std::count(configs.begin(), configs.end(), d) != 0;
-		}
-		std::any& setValue(std::any x) { _value = x; return x; }
+		void setTokenStr(T s) { orig = lexertk::token(anyToStr<T>(s)); }
+		std::string getName() { return name; }
 		lexertk::token& getToken() { return orig; }
-		std::string str() {
+		virtual std::string str() override {
 			return std::string("[var] name: " + name + ", val=" + orig.value + ", decl_type: " + Base::declStr(decl) + ", configurations: " + configsStr());
 		}
 	};
@@ -83,22 +61,28 @@ namespace marine {
 		std::string name;
 		bool returnable;
 		std::vector<Base::Decl> paramTypes;
-		ObjectCallable(const char* n, bool r, std::vector < Base::Decl> types) : name(n), returnable(r), paramTypes(types) {}
+		Base::Decl returnType = Base::Decl::UNKNWN;
+		ObjectCallable(const char* n, bool r, std::vector < Base::Decl> types,Base::Decl* ret = nullptr) : name(n), returnable(r), paramTypes(types) 
+		{
+			if (ret != nullptr) {
+				returnType = *ret;
+			}
+		}
 	public:
-		virtual void call(std::vector<std::any>& a, Variable* _this, marine::VContainer* v = nullptr) { throw marine::errors::RuntimeError("ObjectCallable (function in object) is null."); }
+		virtual void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr) { throw marine::errors::RuntimeError("ObjectCallable (function in object) is null."); }
 
 	};
 
-	using LAction = void (*)(std::vector<std::any>, Variable* _this);
+	using LAction = void (*)(std::vector<std::any>, ValueHolder* _this);
 
-	using LFunction = marine::VContainer(*)(std::vector<std::any>, Variable* _this);
+	using LFunction = marine::VContainer(*)(std::vector<std::any>, ValueHolder* _this);
 
 
 	struct ObjectFunction : public ObjectCallable {
 		LFunction c;
 	public:
-		ObjectFunction(const char* name, LFunction a, std::vector<Base::Decl> types) : ObjectCallable(name, false, types), c(a) {}
-		void call(std::vector<std::any>& a, Variable* _this, marine::VContainer* v = nullptr) override {
+		ObjectFunction(const char* name, Base::Decl returnType, LFunction a, std::vector<Base::Decl> types) : ObjectCallable(name, false, types, &returnType), c(a) {}
+		void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr) override {
 			*v = c(a, _this);
 		}
 	};
@@ -110,7 +94,7 @@ namespace marine {
 		ObjectCommand(const char* name, LAction a, std::vector<Base::Decl> types) : ObjectCallable(name, false, types), c(a) {
 			std::cout << "created Object Command: " << name << std::endl;
 		}
-		void call(std::vector<std::any>& a, Variable* _this, marine::VContainer* v = nullptr) override {
+		void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr) override {
 			c(a, _this);
 		}
 
@@ -129,8 +113,33 @@ namespace marine {
 
 
 
+	class DynamicObject{
 
-	class StaticObject {
+	using Container = std::unordered_map<std::string, VContainer>;
+
+	protected:
+		Container _container;
+
+	public:
+		DynamicObject(){}
+		DynamicObject(Container& items): _container(items) {}
+		Container::iterator get(std::string x) {
+			return _container.find(x);
+		}
+		void set(std::string key, VContainer& val) {
+			_container.find(key)->second = val;
+		}
+		bool add(std::string key, VContainer& val) {
+			if (_container.count(key)) return false;
+
+			_container.insert({ key, val });
+			return true;
+		}
+		bool has(std::string key) {
+			return _container.count(key);
+		}
+	};
+	class StaticObject{
 	protected:
 		std::string name;
 		std::vector <std::shared_ptr<ObjectCallable>> functions{};

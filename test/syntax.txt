@@ -131,12 +131,12 @@ ARRAY (LIST):
 
 --DYNAMIC OBJECTS--
 
-	object <name> ?= 
+	obj <name> ?= 
 	{
 		<key>:name : <value>:type , ? repeat
 	}
 
-	object myobject = {ip: '192.168.0.1', port: 4444}
+	obj myobject = {string ip: '192.168.0.1', int port: 4444}
 
 --TUPLES--
 
@@ -145,3 +145,30 @@ ARRAY (LIST):
 
 	tuple[int, string] mytuple = tuple(1, "my tuple string")
 
+
+
+
+--LIBRARY IDEAS--
+
+	EMAIL:
+		desc:  a library for easily sending emails over the web
+		usage:
+			
+			Emailer mailer = new EMailer({username, password}, {sender_username})
+
+			class Email;
+
+			Email myemail = Emailer@createEmail(subject, [recipients], content)
+
+			mailer.compose(Email) //creates a draft with an email object
+
+			mailer.send() //sends the email
+
+			Email draft = mailer.erase() //gets rid of the draft, and returns the deleted draft
+	FILE SYS:
+		desc: an inb library for communicating with the filesystem
+		usage:
+			
+			string fileContent = read(filePath)
+
+			List[String] lines = readLines(filePath)

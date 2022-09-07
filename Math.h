@@ -120,8 +120,8 @@ namespace marine {
 			Node(lexertk::token to, Base::Decl decl, bool __negate = false) : t(to), type(decl), negated(__negate) {
 				//std::cout << "\ncreated singular node with val of: " + to.value + ", with type of:" << Base::declStr(type) << std::endl;
 			}
-			Node(Node _left, Operator _op, Node _right, bool __negate = false) : left(new Node(_left)), right(new Node(_right)), oper(new Operator(_op)), negated(__negate) {
-
+			Node(Node& _left, Operator _op, Node& _right, bool __negate = false) : left(new Node(_left)), right(new Node(_right)), oper(new Operator(_op)), negated(__negate) {
+				DEBUG("left is variable?"); DEBUG(left->isVariable());
 				//std::cout << "getting root node type of:" << _left.repr() << std::endl;
 				auto ltype = getRootNodeType(&_left, true);
 				auto rtype = getRootNodeType(&_right, false);
@@ -133,6 +133,7 @@ namespace marine {
 
 				//std::cout << "VARIABLE final type: " << Base::declStr(type) << std::endl;
 			}
+			virtual ~Node() = default;
 			static Base::Decl getRootNodeType(Node* rec, bool l) {
 				if (rec->isSingular() || rec->isVariable()) return rec->type;
 				if (l) return getRootNodeType(rec->getLeft(), l);
@@ -198,6 +199,7 @@ namespace marine {
 				auto op = oper->get().value;
 				if (left->isSingular()) {
 					DEBUG("left is singular:" + left->repr());
+					
 					if (right->isSingular()) {
 						switch (left->type) {
 						case Base::Decl::INT:
@@ -587,9 +589,9 @@ namespace marine {
 			std::shared_ptr<Variable> internal_value = nullptr;
 
 		public:
-			VariableNode(Variable& v, bool __negate = false) : internal_value(&v), Node(lexertk::token(v.str()), v.getDecl(), __negate) {
+			VariableNode(std::shared_ptr<Variable> v, bool __negate = false) : internal_value(v), Node(lexertk::token(v->str()), v->getDecl(), __negate) {
 				DEBUG("CREATING VARIABLE NODE");
-				DEBUG(v.str());
+				DEBUG(v->str());
 			}
 			bool isVariable() override { return true; }
 			virtual bool isSingular() override {
@@ -617,6 +619,46 @@ namespace marine {
 				}
 			}
 		};
+		class VCNode: public Node {
+		protected:
+			std::shared_ptr<VContainer> internal_value = nullptr;
+		public:
+			//(new VContainer) needed to keep lifetime of shared ptr, if you use the & of v, v will be destroyed.
+			VCNode(VContainer& v, bool __negate = false) : internal_value(new VContainer(v)), Node(lexertk::token(v.getStringified()), v.type(), __negate) {
+				DEBUG("CREATING VC NODE");
+			}
+			bool isVariable() override { return true; }
+			virtual bool isSingular() override {
+				return false;
+				//returning false on this method tells thet node calc method that it needs to call the overrided calc method to extract the value
+			}
+			virtual std::string repr() {
+				return std::string("(VCNode) val:" + internal_value->getStringified());
+			}
+			VContainer* getValue() { return internal_value.get(); }
+			virtual std::any calc() override {
+				DEBUG("CALCING VC NODE");
+				DEBUG(internal_value->getStringified());
+				if (internal_value == nullptr) return nullptr;
+				switch (internal_value->type()) {
+				case Base::Decl::INT:
+					return internal_value->cast<int>();
+				case Base::Decl::FLOAT:
+					return internal_value->cast<float>();
+				case Base::Decl::STRING:
+					DEBUG("CALCING STRING");
+					DEBUG(internal_value->get().type().name());
+					return internal_value->cast<String>();
+				case Base::Decl::BOOL:
+					return internal_value->cast<bool>();
+				case Base::Decl::LIST:
+					return internal_value->cast<ArrayList>();
+				default:
+					throw marine::errors::RuntimeError("this type is currently not supported.");
+				}
+			}
+		};
+		
 		class BoolExpr {
 		protected:
 			std::shared_ptr<Node> left = nullptr;
