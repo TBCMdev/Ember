@@ -120,11 +120,10 @@ namespace marine {
 			Node(lexertk::token to, Base::Decl decl, bool __negate = false) : t(to), type(decl), negated(__negate) {
 				//std::cout << "\ncreated singular node with val of: " + to.value + ", with type of:" << Base::declStr(type) << std::endl;
 			}
-			Node(Node& _left, Operator _op, Node& _right, bool __negate = false) : left(new Node(_left)), right(new Node(_right)), oper(new Operator(_op)), negated(__negate) {
-				DEBUG("left is variable?"); DEBUG(left->isVariable());
+			Node(std::shared_ptr<Node> _left, Operator _op, std::shared_ptr<Node> _right, bool __negate = false) : left(_left), right(_right), oper(new Operator(_op)), negated(__negate) {
 				//std::cout << "getting root node type of:" << _left.repr() << std::endl;
-				auto ltype = getRootNodeType(&_left, true);
-				auto rtype = getRootNodeType(&_right, false);
+				auto ltype = getRootNodeType(_left.get(), true);
+				auto rtype = getRootNodeType(_right.get(), false);
 
 				//std::cout << Base::declStr(ltype) << ", " << Base::declStr(rtype) << std::endl;
 				if (ltype != rtype) throw errors::MError("performing arithmatic on two types that are not supported is not allowed");
@@ -607,8 +606,6 @@ namespace marine {
 				case Base::Decl::FLOAT:
 					return internal_value->cast<float>();
 				case Base::Decl::STRING:
-					DEBUG("CALCING STRING");
-					DEBUG(internal_value->cast<String>().get());
 					return internal_value->cast<String>();
 				case Base::Decl::BOOL:
 					return internal_value->cast<bool>();

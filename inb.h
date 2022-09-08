@@ -123,7 +123,7 @@ namespace marine {
 		void call_no_include(IFunc _definer) {
 			for (auto& v : __NO_INCLUDE_ACTIONS) {
 				if (v.name == _definer.name && v.parameter_count == _definer._param_c && v.paramTypes == _definer.paramDeclTypes) {
-					std::cout << "[debug inb] CALLING: " << v.name << ", with param count of:" << v.parameter_count << std::endl;
+					//std::cout << "[debug inb] CALLING: " << v.name << ", with param count of:" << v.parameter_count << std::endl;
 					v.callable(_definer.parameters);
 					return;
 				}
@@ -132,7 +132,7 @@ namespace marine {
 		}
 		inb_action& getNoIncludeActionByName(std::string& name, std::vector<Base::Decl> paramTypes) {
 			for (auto& v : __NO_INCLUDE_ACTIONS) {
-				if (v.name == name && v.paramTypes == paramTypes) { std::cout << "returning " << v.name << std::endl; return v; }
+				if (v.name == name && v.paramTypes == paramTypes) return v;
 			}
 			inb_action null{ "NULL", 0,{},  nullptr };
 			return null;

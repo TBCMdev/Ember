@@ -1,5 +1,5 @@
 method myReturnMethod(int i){
-	int add = 2 + 2
+	int add = i + 2
 
 
 	return add

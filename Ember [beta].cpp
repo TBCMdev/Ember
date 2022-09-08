@@ -30,7 +30,7 @@ public:
 
 		float ms = dur.count() * 1000.0f;
 		std::stringstream s;
-		s << name << " took" << ms << "ms" << "\n";
+		s << name << " took " << ms << "ms" << "\n";
 		marine::out::stpr(s.str().c_str(), marine::out::STATUS::WARN);
 	}
 
@@ -149,6 +149,7 @@ inline bool _compile(string fc, bool runCompileAfter)
 	while (p.canAdvance()) {
 		p.parse();
 	}
+	std::cout << "\n\n";
 	for (auto x : p.getVariables()) {
 		std::cout << x.str() << std::endl;
 	}

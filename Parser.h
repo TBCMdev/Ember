@@ -234,8 +234,7 @@ namespace marine {
 					Operator op = operatorStack.back();
 					operatorStack.pop_back();
 
-
-					Node full(*left, op, *right);
+					Node full(left, op, right);
 					operationStack.push_back(std::make_shared<Node>(full));
 				}
 				for (auto& x : operatorStack) DEBUG("opers on bool stack:" + x.str());
@@ -314,7 +313,6 @@ namespace marine {
 						}
 					}
 					else if (isOp(cur())) {
-						std::cout << "is op:" << cur().value << std::endl;
 						if (Base::is(cur(), "-") && (left == nullptr || op != nullptr)) negate_next_node_recr = true;
 						if (op == nullptr) op = new Operator(cur());
 					}
@@ -348,7 +346,7 @@ namespace marine {
 						break;
 					}
 				}
-				return Node(*left, *op, *right, negate);
+				return Node(std::make_shared<Node>(*left), *op, std::make_shared<Node>(*right), negate);
 			};
 			std::vector<std::shared_ptr<Node>> operationStack;
 			Type finalVal{};
@@ -375,7 +373,6 @@ namespace marine {
 					operationStack.push_back(std::make_shared<Node>(cur(), Base::Decl::FLOAT, negate_next_node));
 					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext())) {
-						std::cout << ("is not op2:" + getNext().value);
 						br = true;
 					}
 
@@ -384,7 +381,6 @@ namespace marine {
 					operationStack.push_back(std::make_shared<Node>(cur(), Base::Decl::STRING, negate_next_node));
 					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext())) {
-						std::cout << ("is not op3:" + getNext().value);
 						br = true;
 					}
 				}
@@ -443,7 +439,9 @@ namespace marine {
 
 
 					DEBUG("creating large node");
-					operationStack.push_back(std::make_shared<Node>(*left, op, *right));
+					DEBUG("is left singular?"); DEBUG(left->isSingular()); DEBUG(left->repr());
+
+					operationStack.push_back(std::make_shared<Node>(left, op, right));
 				}
 				for (auto& x : operatorStack) DEBUG("opers on stack:" + x.str());
 				for (auto& x : operationStack) DEBUG("nodes on stack:" + x->repr());
@@ -543,7 +541,6 @@ namespace marine {
 					}
 					else if (type == Base::Decl::STRING) {
 						String val = parseExt<String>();
-						std::cout << "GET:" << val.get() << std::endl;
 
 						ret = new VContainer(val, depth, type);
 					}
@@ -834,7 +831,6 @@ namespace marine {
 				for (auto& x : PredictedParameterTypes) {
 					DEBUG("PREDICTED TYPE:");DEBUG(Base::declStr(x));
 				}
-				std::cout << std::endl << std::endl;
 				inb::Callable* c;
 				c = &inb::getNoIncludeActionByName(name.value,PredictedParameterTypes);
 				if (c->name == "NULL") {
