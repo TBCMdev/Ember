@@ -408,6 +408,8 @@ namespace lexertk
             s_end_ = str.data() + str.size();
 
             eof_token_.set_operator(token_t::e_eof, s_end_, s_end_, base_itr_);
+
+            lexertk::generator::token_list_t previousTokenList = token_list_;
             token_list_.clear();
 
             while (!is_end(s_itr_))
@@ -421,6 +423,7 @@ namespace lexertk
                     return false;
                 }
             }
+
             return true;
         }
 

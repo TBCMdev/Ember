@@ -42,6 +42,9 @@ static bool debug = false;
 class fileManager
 {
 public:
+	static void precompile(lexertk::generator* l) {
+
+	}
 	static lexertk::generator compile(string fc, bool debug = false) // fc = file content
 	{
 		lexertk::generator generator;
@@ -144,6 +147,7 @@ private:
 inline bool _compile(string fc, bool runCompileAfter)
 {
 	lexertk::generator gen(fileManager::compile(fc, false));
+
 	marine::Parser p(gen);
 	p.advance();
 	while (p.canAdvance()) {

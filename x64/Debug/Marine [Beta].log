@@ -5,21 +5,22 @@ C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\ObjectHandler.h(142,2): 
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(16,1): warning C4005: 'DEBUG': macro redefinition
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(8): message : see previous definition of 'DEBUG'
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(52,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1196,28): warning C4101: 'ig': unreferenced local variable
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1485,20): warning C4018: '<=': signed/unsigned mismatch
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(786,29): warning C4101: 'ig': unreferenced local variable
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(191): message : see reference to function template instantiation 'Type marine::Parser::parseFuncCall<marine::VContainer>(bool *)' being compiled
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1202,28): warning C4101: 'ig': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1752,20): warning C4018: '<=': signed/unsigned mismatch
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(785,29): warning C4101: 'ig': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(194): message : see reference to function template instantiation 'Type marine::Parser::parseFuncCall<marine::VContainer>(bool *)' being compiled
           with
           [
               Type=marine::VContainer
           ]
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(885,29): warning C4101: 'ig': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(884,29): warning C4101: 'ig': unreferenced local variable
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(138): warning C4172: returning address of local variable or temporary: null
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(145): warning C4172: returning address of local variable or temporary: null
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1092): warning C4715: 'marine::Parser::parseWhileStatement': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1366): warning C4715: 'marine::Parser::parseVariableUsage': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(753): warning C4715: 'marine::ext::BoolExpr::evaluate': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1104): warning C4715: 'marine::Parser::parseWhileStatement': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1524): warning C4715: 'marine::Parser::parseVariableUsage': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(701): warning C4715: 'marine::ext::BoolExpr::evaluate': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1384): warning C4715: 'marine::Parser::parseSafeVariableUsage': not all control paths return a value
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(113): warning C4172: returning address of local variable or temporary: v
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(695): warning C4715: 'marine::ext::BoolExpr::repr': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\helpers.h(72): warning C4715: 'marine::isBool': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(597): warning C4715: 'marine::ext::BoolExpr::repr': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\helpers.h(74): warning C4715: 'marine::isBool': not all control paths return a value
   Marine [Beta].vcxproj -> C:\Users\krist\source\repos\Marine [Beta]\x64\Debug\Ember [Beta].exe

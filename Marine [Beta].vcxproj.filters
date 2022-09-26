@@ -47,5 +47,8 @@
     <ClInclude Include="ValueHolder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Operator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

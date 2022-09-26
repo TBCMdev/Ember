@@ -10,7 +10,7 @@
 #include "helpers.h"
 #include "Types.h"
 #include "inb.h"
-
+#include "Operator.h"
 
 
 #define DEBUG(x) if (MARINE__DEBUG) std::cout << "[debug] " << x << std::endl
@@ -168,8 +168,11 @@ namespace marine {
 				else if (isVariable()) {
 					Variable& v = getVariable(cur());
 					//std::cout << v.str() << "is var" << std::endl;
-					VariableNode var(std::make_shared<Variable>(v), negate_next_node);
-					operationStack.push_back(std::make_shared<VariableNode>(var));
+					std::shared_ptr<Variable> shared(&v);
+					operationStack.push_back(std::make_shared<VariableNode>(shared, negate_next_node));
+
+
+
 					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext())) {
 						//std::cout << ("is not op4:" + getNext().value);
@@ -223,7 +226,8 @@ namespace marine {
 					br = true;
 				}
 				else {
-					st_spr(cur().value,STATUS::WARN);
+					std::string x("unknown token: " + cur().value);
+					st_spr(x, STATUS::WARN);
 				}
 
 				if (operatorStack.size() > 0 && operationStack.size() > 1) {
@@ -234,8 +238,7 @@ namespace marine {
 					Operator op = operatorStack.back();
 					operatorStack.pop_back();
 
-					Node full(left, op, right);
-					operationStack.push_back(std::make_shared<Node>(full));
+					operationStack.push_back(std::make_shared<Node>(left, op, right));
 				}
 				for (auto& x : operatorStack) DEBUG("opers on bool stack:" + x.str());
 				for (auto& x : operationStack) DEBUG("nodes on bool stack:" + x->repr());
@@ -243,8 +246,6 @@ namespace marine {
 				if (br)  break;
 				advance();
 			}
-			//std::cout << "cur after break:" << cur().value;
-			//std::cout << "returning after bool:" << operationStack.back()->repr() << std::endl;
 			
 			DEBUG("IS LAST VECTOR ELEMENT VARIABLE NODE?");
 			DEBUG(operationStack.back()->isVariable());
@@ -410,7 +411,6 @@ namespace marine {
 				}
 				else if (isFuncCall()) {
 					marine::VContainer v = parseFuncCall<marine::VContainer>();
-					//std::cout << "VARIABLE VCONTAINER TYPE 2: " << Base::declStr(v.type()) << std::endl;
 					operationStack.push_back(std::make_shared<VCNode>(v, negate_next_node));
 					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext())) {
@@ -464,6 +464,7 @@ namespace marine {
 				DEBUG("node str:"); DEBUG(operation->repr());
 				return finalVal;
 			}
+			DEBUG("PARSE EXT LAST NODE: " + operation->repr());
 			finalVal = std::any_cast<Type>(operation->calc());
 			return finalVal;
 		}
@@ -649,6 +650,7 @@ namespace marine {
 				else if (Base::is(gen[i], "]")) nbr_c--;
 				else if (isInt(gen[i])) ret.push_back(Base::Decl::INT);
 				else if (isFloat(gen[i])) ret.push_back(Base::Decl::FLOAT);
+				else if (isString(gen[i])) ret.push_back(Base::Decl::STRING);
 				else if (isVariable(gen[i])) {
 					DEBUG("is var: " + gen[i].value);
 					Variable& v = getVariable(gen[i]);
@@ -832,6 +834,7 @@ namespace marine {
 					DEBUG("PREDICTED TYPE:");DEBUG(Base::declStr(x));
 				}
 				inb::Callable* c;
+				DEBUG("finding function: " + name.value);
 				c = &inb::getNoIncludeActionByName(name.value,PredictedParameterTypes);
 				if (c->name == "NULL") {
 					//std::cout << "is null";
@@ -1010,6 +1013,19 @@ namespace marine {
 		}
 		return expr;
 	}
+	BoolExpr* parseRawLogicalExpr() {
+		std::shared_ptr<Node> left = parseBoolExprExt();
+
+		Operator c(cur());
+		DEBUG("CREATING OPERATOR:" + cur().value);
+
+		advance();
+
+		std::shared_ptr<Node> right = parseBoolExprExt();
+
+		return new BoolExpr(left, c, right);
+
+	}
 	void parseLogicalStatement() {
 		advance();
 		if (!Base::is(cur(), "(")) throw marine::errors::SyntaxError("expected '(' after if statement.");
@@ -1087,29 +1103,23 @@ namespace marine {
 		setCaret(endindex);
 	}
 	template<typename T>
-	void modifyVariable(Variable* v, Operator o, T val, lexertk::token* token = nullptr, Base::Decl d = Base::Decl::UNKNWN) {
+	void modifyVariable(Variable* v, T val, lexertk::token* token = nullptr, Base::Decl d = Base::Decl::UNKNWN) {
 		DEBUG("MODIFYING VARIABLE:");
 		DEBUG(v->str());
 		DEBUG(Base::declStr(v->getDecl()));
-		switch (o.getType()) {
-		case Operator::OPTYPE::ASSIGN:
-			v->getValue() = val;
-			break;
-		default:
-			throw marine::errors::SyntaxError("unexpected operator while trying to modify variable usage.");
-		//more to come
-
-
-
-		}
-
-
-
+		
+		
+		v->getValue() = val;
 		//assert same types of declaration
 
 
 		if (token != nullptr)v->setToken(*token);
-		else v->loseStringTrace();
+		else {
+			if (true) {
+				auto x = lexertk::token(std::to_string(v->cast<int>()));
+				v->setToken(x);
+			}else v->loseStringTrace();
+		}
 
 
 		DEBUG("END");
@@ -1245,6 +1255,133 @@ namespace marine {
 	bool isVariableObjectUsage() {
 		return (Base::is(getNext(), "."));
 	}
+	VContainer parseSafeVariableUsage() {
+		Variable* v = &getVariable(cur());
+		DEBUG("parsing variable usage at:"); DEBUG(cur().value);
+		if (v->getName() == "NULL") throw marine::errors::SyntaxError("unknown token");
+		DEBUG(v->str());
+		if (isOp(getNext())) {
+			Operator op(advance());
+			//DEBUG("OPERATOR:");DEBUG((int)op.getType());
+			switch (v->getDecl()) {
+			case Base::Decl::INT:
+			{
+				auto x = parseExt<int>();
+				switch (op.getType()) {
+				case Operator::OPTYPE::ADD_S:
+					return VContainer(v->cast<int>() + x, v->getDepth(), v->getDecl());
+				case Operator::OPTYPE::SUB_S:
+					return VContainer(v->cast<int>() - x, v->getDepth(), v->getDecl());
+				default:
+					return VContainer(x, v->getDepth(), v->getDecl());
+				}
+			}
+			case Base::Decl::FLOAT:
+			{
+				auto x = parseExt<float>();
+				switch (op.getType()) {
+				case Operator::OPTYPE::ADD_S:
+					return VContainer(v->cast<float>() + x,v->getDepth(), v->getDecl());
+				case Operator::OPTYPE::SUB_S:
+					return VContainer(v->cast<float>() - x, v->getDepth(), v->getDecl());
+				default:
+					return VContainer(x, v->getDepth(), v->getDecl());
+				}
+			}
+			case Base::Decl::STRING:
+			{
+				DEBUG("MODIFYING STRING");
+				String x = parseExt<String>();
+				lexertk::token t(x.get());
+				return VContainer(v->cast<String>() + x, v->getDepth(), v->getDecl());
+			}
+			case Base::Decl::BOOL:
+				return VContainer(v, v->getDepth(), v->getDecl());
+			case Base::Decl::LIST:
+				return VContainer(v, v->getDepth(), v->getDecl());
+			}
+			return VContainer::null();
+		}
+		else if (Base::is(getNext(), ".")) {
+			if (!v->isDynamicObj()) {
+				advance();
+				DEBUG("IS DOT");
+				//check if is function first
+				DEBUG(getNext().value);
+				VContainer x = parseObjectFunctionReference(v);
+
+				DEBUG(Base::declStr(x.type()));
+				if (Base::is(getNext(), ".")) {
+
+					advance();
+					DEBUG(getNext().value);
+					return parseObjectFunctionReference(&x);
+				}
+				return x;
+			}
+			else {
+				//accessing dynamic object item
+				advance(2);
+				std::unordered_map<std::string, VContainer>::iterator iter;
+
+				DynamicObject& d = v->castRef<DynamicObject>();
+
+				std::string& name = cur().value;
+				DEBUG("accessing dynamic object item... with name of:"); DEBUG(name);
+
+
+				if (!d.has(name)) throw marine::errors::RuntimeError("object does not contain value.");
+
+				iter = d.get(name);
+
+				if (iter->second.isDynamicObj()) {
+					d = iter->second.cast<DynamicObject&>();
+					advance(2);
+				}
+				else if (iter->second.isDynamicObj() && Base::is(getNext(), ".")) {
+					// we are accessing another object that is a connected STATIC object, not a dynamic object.
+					DEBUG("found object recursion...");
+					advance();
+					return parseObjectFunctionReference(&iter->second);
+				}
+				DEBUG("NEXT:"); DEBUG(getNext().value);
+
+
+				if (!isOp(getNext())) return iter->second;
+				else {
+
+					auto* vc = &iter->second;
+					Operator op(advance());
+					//DEBUG("OPERATOR:");DEBUG((int)op.getType());
+					switch (vc->getDecl()) {
+					case Base::Decl::INT:
+						modifyVContainer<int>(vc, op, parseExt<int>());
+						break;
+					case Base::Decl::FLOAT:
+						modifyVContainer<float>(vc, op, parseExt<float>());
+						break;
+					case Base::Decl::STRING:
+					{
+						DEBUG("MODIFYING STRING");
+						String x = parseExt<String>();
+						lexertk::token t(x.get());
+						modifyVContainer<String>(vc, op, x, &t);
+						break;
+					}
+					case Base::Decl::BOOL:
+						modifyVContainer<bool>(vc, op, parseExt<bool>());
+						break;
+					case Base::Decl::LIST:
+						modifyVContainer<ArrayList>(vc, op, parseExt<ArrayList>());
+						break;
+					}
+					return *vc;
+				}
+			}
+			//maybe is var?
+		}
+
+	}
 	VContainer parseVariableUsage() {
 
 		Variable* v = &getVariable(cur());
@@ -1252,29 +1389,54 @@ namespace marine {
 		if (v->getName() == "NULL") throw marine::errors::SyntaxError("unknown token");
 		DEBUG(v->str());
 		if (isOp(getNext())) {
-			DEBUG(Base::declStr(v->getDecl()));
 			Operator op(advance());
 			//DEBUG("OPERATOR:");DEBUG((int)op.getType());
 			switch(v->getDecl()){
-			case Base::Decl::INT:
-				modifyVariable<int>(v, op, parseExt<int>());
+			case Base::Decl::INT: 
+			{
+				auto x = parseExt<int>();
+				switch (op.getType()) {
+				case Operator::OPTYPE::ADD_S:
+					modifyVariable<int>(v, v->cast<int>() + x);
+					break;
+				case Operator::OPTYPE::SUB_S:
+					modifyVariable<int>(v, v->cast<int>() - x);
+					break;
+				default:
+					modifyVariable<int>(v, x);
+					break;
+				}
 				break;
+			}
 			case Base::Decl::FLOAT:
-				modifyVariable<float>(v, op, parseExt<float>());
+			{
+				auto x = parseExt<float>();
+				switch (op.getType()) {
+				case Operator::OPTYPE::ADD_S:
+					modifyVariable<float>(v, v->cast<float>() + x);
+					break;
+				case Operator::OPTYPE::SUB_S:
+					modifyVariable<float>(v, v->cast<float>() - x);
+					break;
+				default:
+					modifyVariable<float>(v, x);
+					break;
+				}
 				break;
+			}
 			case Base::Decl::STRING:
 			{
 				DEBUG("MODIFYING STRING");
 				String x = parseExt<String>();
 				lexertk::token t(x.get());
-				modifyVariable<String>(v, op, x, &t);
+				modifyVariable<String>(v, x, &t);
 				break;
 			}
 			case Base::Decl::BOOL:
-				modifyVariable<bool>(v, op, parseExt<bool>());
+				modifyVariable<bool>(v, parseExt<bool>());
 				break;
 			case Base::Decl::LIST:
-				modifyVariable<ArrayList>(v, op, parseExt<ArrayList>());
+				modifyVariable<ArrayList>(v, parseExt<ArrayList>());
 				break;
 			}
 			return VContainer::null();
@@ -1361,6 +1523,115 @@ namespace marine {
 		//check for usage of '.'
 	}
 	bool isReturnStatement() { return (Base::is(cur(), "return")); }
+
+	bool parseForStatement() {
+		int brc = 1;
+
+		if (!Base::is(advance(), "(")) throw marine::errors::SyntaxError("expected '(' after for declaration. ");
+
+		BoolExpr* eval = nullptr;
+		int ccount = 0;
+
+		incDepth();
+		int oper_start = 0, oper_end = 0;
+		while (brc > 0 && canAdvance()) {
+			advance();
+			DEBUG("checking FOR:" + cur().value);
+			if (Base::is(cur(), "(")) brc++;
+			else if (Base::is(cur(), ")")) brc--;
+			else if (brc == 0) break;
+			else if (Base::is(cur(), ";")) ccount++;
+			//parse loop statement here
+			else if (isDecl() && ccount == 0) {
+				parseDecl();
+			}
+			else if (ccount == 1) {
+				DEBUG("STARTING LOGICAL AT:" + cur().value);
+
+				eval = parseRawLogicalExpr();
+
+				DEBUG("ENDING LOGICAL AT:" + cur().value);
+				DEBUG("BOOL EXPR:" + eval->repr());
+			}
+			else if (ccount == 2) {
+				oper_start = index;
+				DEBUG("STARTING VARIABLE USAGE AT:" + cur().value);
+				
+				int c = 1;
+				while (canAdvance()) {
+
+					if (Base::is(getNext(), "(")) c++;
+					else if (Base::is(getNext(), ")")) c--;
+					DEBUG("C: "); DEBUG(c);
+
+					if (c == 0) break;
+
+					advance();
+
+				}
+				DEBUG("ENDING VARIABLE USAGE AT:" + cur().value);
+				oper_end = index;
+			}
+		}
+
+		brc++;
+
+		if (!Base::is(advance(), "{")) throw marine::errors::SyntaxError("expected '{' after for loop declaration.");
+
+		int indexstart = index;
+
+		int endindex = 0;
+
+		advance();
+
+		while (brc > 0 && canAdvance()) {
+			if (Base::is(cur(), "{")) brc++;
+			else if (Base::is(cur(), "}")) brc--;
+			//parse contained code here
+			if (brc < 1) {
+				endindex = index;
+			}
+			advance();
+		}
+
+		if (eval == nullptr) {
+			// maybe is for x in y loop
+		}
+		else {
+			int c = 0;
+			while (eval->evaluate()) {
+
+				//if (index >= endindex) continue;
+				c++;
+
+				setCaret(indexstart);
+				while (canAdvance() && index < endindex) {
+					if (parse()) return true; // true means we need to return from the parent function, if it exists.
+				}
+				
+				if (!eval->evaluate()) break;
+
+
+				setCaret(oper_start);
+
+				VContainer val = parseSafeVariableUsage();
+
+				if (!eval->evaluateExt(&val)) break;
+
+				setCaret(oper_start);
+
+				parseVariableUsage();
+				DEBUG("CURRENT:"); DEBUG(cur().value);
+				DEBUG(c);
+
+			}
+			DEBUG("LEAVING FOR LOOP");
+			decDepth();
+			setCaret(endindex);
+		}
+		return false;
+	}
+
 #pragma endregion
 	bool parse(ValueHolder* v = nullptr) {
 		DEBUG("checking cur:" + cur().value);
@@ -1387,12 +1658,13 @@ namespace marine {
 			}
 
 		}
+		else if (isForStatement()) {
+			parseForStatement();
+		}
 		else if (isIfStatement()) {
-			DEBUG("is if:" + cur().value);
 			parseLogicalStatement();
 		}
 		else if (isWhileStatement()) {
-			DEBUG("is while:" + cur().value);
 			parseWhileStatement();
 		}
 		else if (isVariable()) {
@@ -1403,7 +1675,6 @@ namespace marine {
 			DEBUG("is func call:" + cur().value);
 
 			parseFuncCall<std::any>();
-			DEBUG("done callable.");
 		}
 		else if (isFuncDecl()) {
 			DEBUG("is func decl:" + cur().value);

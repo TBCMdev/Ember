@@ -150,6 +150,7 @@
     <ClInclude Include="lexertk.hpp" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="MError.h" />
+    <ClInclude Include="Operator.h" />
     <ClInclude Include="Parser.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="ValueHolder.h" />

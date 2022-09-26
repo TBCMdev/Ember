@@ -46,7 +46,9 @@ namespace marine {
 		if (t.value == "==" ||
 			t.value == "!=" ||
 			t.value == ">=" ||
-			t.value == "<=") return true;
+			t.value == "<=" ||
+			t.value == "<" ||
+			t.value == ">") return true;
 		else return false;
 	}
 	static bool isAndOrOp(lexertk::token& t) {
@@ -107,10 +109,13 @@ namespace marine {
 			switch (s) {
 			case STATUS::ERR:
 				SetConsoleTextAttribute(hwnd, 12);
+				break;
 			case STATUS::WARN:
 				SetConsoleTextAttribute(hwnd, 14);
+				break;
 			case STATUS::GOOD:
 				SetConsoleTextAttribute(hwnd, 10);
+				break;
 
 			}
 		}

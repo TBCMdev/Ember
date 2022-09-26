@@ -1,12 +1,4 @@
-method myReturnMethod(int i){
-	int add = i + 2
-
-
-	return add
+for(int x = 0; x < 10; x += 1){
+	log("num: ")
+	log(x)
 }
-
-
-int myval = myReturnMethod(4)
-
-
-log(myval) 
