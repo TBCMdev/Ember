@@ -50,13 +50,20 @@ namespace marine {
 		std::vector<Base::Decl> types;
 		int size = -1;
 	public:
+		static std::string string(ArrayList& x) {
+			return x.str();
+		}
 		ArrayList(std::vector<VContainer> _items = {}, int _size = -1) : items(_items), size(_size){
 		}
 		ArrayList(std::vector<Base::Decl> v): types(v) {
 
 		}
-		void add(VContainer& item) {
-			items.push_back(item);
+		void add(VContainer& existing) {
+			items.push_back(existing);
+		}
+		template<typename T>
+		void add(T v, int depth, Base::Decl x, std::vector<Base::DeclConfig> y = {}) {
+			items.push_back(VContainer(v, depth, x, y));
 		}
 		VContainer get(int l) {
 			return items[l];
@@ -70,6 +77,19 @@ namespace marine {
 			case ListOperator::LOType::LRSLICE:
 				return sliceBetween(items, *op.left, *op.right);
 			}
+		}
+		std::vector<VContainer>& getItems() { return items; }
+		std::string str() {
+			std::stringstream s;
+			int end = items.size() - 1;
+			s << "[";
+			for (int i = 0; i < items.size(); i++) {
+				if (i != end) s << VContainer::VCStr(items[i]) << ", ";
+				else s << VContainer::VCStr(items[i]);
+			}
+			s << "]";
+
+			return s.str();
 		}
 	};
 	

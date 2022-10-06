@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include "Base.h"
-
+#include "String.h"
 namespace marine {
 	class StaticObject;
 	class ValueHolder {
@@ -31,7 +31,9 @@ namespace marine {
 		}
 		int getDepth() { return __depth; }
 		void setDepth(unsigned int depth) { __depth = depth; }
-		void setDecl(Base::Decl d) { decl = d; }
+		void setDecl(Base::Decl d) {
+			this->decl = d;
+		}
 		Base::Decl getDecl() { return decl; }
 		std::any& getValue() { return _value; }
 

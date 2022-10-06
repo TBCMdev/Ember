@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <iomanip>
 class String {
 	std::string value;
 
@@ -24,6 +25,15 @@ public:
 	}
 	String(const char* c) : value(c) {}
 	std::string& get() { return value; }
+	std::string getQuotes() {
+		std::stringstream x;
+
+		x << std::quoted(getCopy());
+
+		return x.str();
+
+		
+	}
 	std::string getCopy() { return value; }
 	void set(std::string& s) { value = s; }
 	void add(std::string& x) { value += x; }

@@ -3,7 +3,7 @@
 #include <string>
 #include "helpers.h"
 
-constexpr bool MARINE__DEBUG = false;
+constexpr bool MARINE__DEBUG = true;
 
 
 
@@ -62,6 +62,8 @@ public:
 			return "DYNAMIC object";
 		case Decl::CUSTOM:
 			return "custom";
+		case Decl::LIST:
+			return "list";
 		default:
 			return "unknown";
 		}

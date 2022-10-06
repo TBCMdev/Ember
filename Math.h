@@ -494,7 +494,6 @@ namespace marine {
 		public:
 			VariableNode(std::shared_ptr<Variable> v, bool __negate = false) : internal_value(v), Node(lexertk::token(v->str()), v->getDecl(), __negate) {
 				DEBUG("CREATING VARIABLE NODE");
-				DEBUG(v->cast<int>());
 				DEBUG(v->str());
 			}
 			bool isVariable() override { return true; }
@@ -554,6 +553,7 @@ namespace marine {
 				case Base::Decl::BOOL:
 					return internal_value->cast<bool>();
 				case Base::Decl::LIST:
+					DEBUG("CALCING LIST...");
 					return internal_value->cast<ArrayList>();
 				default:
 					throw marine::errors::RuntimeError("this type is currently not supported.");

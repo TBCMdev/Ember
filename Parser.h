@@ -395,11 +395,11 @@ namespace marine {
 				}
 				else if (isVariable()) {
 					Variable& v = getVariable(cur());
-					if (!Base::is(getNext(), ".")) {
+					if (!Base::is(getNext(), ".") && !Base::is(getNext(), "[")) {
 						operationStack.push_back(std::make_shared<VariableNode>(std::make_shared<Variable>(v), negate_next_node));
 					}
 					else {
-						DEBUG("parsing variable usage because of object usage from var...");
+						DEBUG("parsing variable usage because of object or array usage from var...");
 						VContainer out = parseVariableUsage();
 						//if (&out == nullptr) throw marine::errors::RuntimeError("unexpected error while trying to access object.");
 						operationStack.push_back(std::make_shared<VCNode>(out, negate_next_node));
@@ -489,6 +489,7 @@ namespace marine {
 				n = std::make_unique<Node>(cur(), Base::Decl::STRING, negate_next_node);
 			}
 			else if (isVariable()) {
+				DEBUG("is variable.");
 				if (!isVariableObjectUsage()) {
 					Variable& v = getVariable(cur());
 
@@ -510,7 +511,42 @@ namespace marine {
 			//should only have one node
 			return finalVal;
 		}
+		ArrayList parseListDecl() {
+			DEBUG("parsing list...");
+			advance();
+			if (!Base::is(cur(), "[")) throw marine::errors::SyntaxError("expected '[' after list declaration.");
 
+			ArrayList _this;
+
+			int c = 1;
+			while (c > 0 && canAdvance()) {
+				advance();
+				if (Base::is(cur(), "[")) {
+					c++;
+					_this.add<ArrayList>(parseListDecl(), depth, Base::Decl::LIST);
+				}
+				else if (Base::is(cur(), "]")) c--;
+				else if (isString(cur())) _this.add<String>(String(cur().value),depth, Base::Decl::STRING);
+				else if (isInt(cur())) _this.add<int>(stoi(cur().value), depth, Base::Decl::INT);
+				else if (isFloat(cur())) _this.add <float> (stof(cur().value), depth, Base::Decl::FLOAT);
+				else if (isVariable()) {
+					VContainer v = parseVariableUsage();
+					_this.add(v);
+				}
+				else if (isFuncCall()) {
+					auto x = parseFuncCall<VContainer>();
+
+					_this.add(x);
+				}
+				else if (!Base::is(cur(), ",")) {
+					throw marine::errors::SyntaxError("expected ',' after creating list element.");
+				}
+
+			}
+			for (auto& x : _this.getItems()) {
+			}
+			return _this;
+		}
 		DynamicObject parseDynamicObjectDecl() {
 			DEBUG("parsing dynamic object...");
 			advance();
@@ -600,8 +636,6 @@ namespace marine {
 				}
 				else if (type == Base::Decl::STRING) {
 					String val = parseExt<String>();
-					std::cout <<"GET:" << val.get() << std::endl;
-					
 					ret = new Variable(decl_name.value, val, val.get(), conf);
 					ret->setDecl(Base::Decl::STRING);
 				}
@@ -610,6 +644,11 @@ namespace marine {
 
 					ret = new Variable(decl_name.value, obj, conf);
 					ret->setDecl(Base::Decl::DYNAMIC_OBJECT);
+				}
+				else if (type == Base::Decl::LIST) {
+					ArrayList list = parseListDecl();
+					ret = new Variable(decl_name.value, list, conf);
+					ret->setDecl(Base::Decl::LIST);
 				}
 				else throw marine::errors::MError("variable type is unknown.");
 				//case Base::Decl::CUSTOM:
@@ -620,6 +659,7 @@ namespace marine {
 				if (push) core_variables.push_back(*ret);
 
 				DEBUG("SETTING VARIABLE INTERNAL OBJ:");
+				DEBUG(Base::declStr(ret->getDecl()));
 				DEBUG(x.getName());
 
 				return Variable(*ret);
@@ -878,6 +918,11 @@ namespace marine {
 							parameters.push_back(parseExtParam<String>());
 							allDecls.push_back(Base::Decl::STRING);
 							break;
+						case Base::Decl::LIST:
+							parameters.push_back(parseExtParam<ArrayList>());
+							allDecls.push_back(Base::Decl::LIST);
+							break;
+
 
 						}
 					}
@@ -886,7 +931,7 @@ namespace marine {
 					}
 					advance();
 				}
-
+				DEBUG("size:");
 				DEBUG(parameters.size());
 				DEBUG(c->name);
 
@@ -1462,7 +1507,6 @@ namespace marine {
 				//accessing dynamic object item
 				advance(2);
 				std::unordered_map<std::string, VContainer>::iterator iter;
-				
 				DynamicObject& d = v->castRef<DynamicObject>();
 
 				std::string& name = cur().value;
@@ -1519,7 +1563,16 @@ namespace marine {
 			}
 			//maybe is var?
 		}
+		else if (Base::is(getNext(), "[")) {
+			advance();
+			int x = parseExt<int>();
 
+
+			switch (v->getDecl()) {
+			case Base::Decl::LIST:
+				return v->castRef<ArrayList>().get(x);
+			}
+		}
 		//check for usage of '.'
 	}
 	bool isReturnStatement() { return (Base::is(cur(), "return")); }

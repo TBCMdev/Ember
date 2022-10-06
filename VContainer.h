@@ -4,6 +4,8 @@
 #include <iostream>
 #include "Base.h"
 #include "ValueHolder.h"
+#include "String.h" 
+#include "Types.h"
 namespace marine {
 	class StaticObject;
 	class VContainer : public ValueHolder {
@@ -12,6 +14,21 @@ namespace marine {
 	public:
 		static VContainer null() {
 			return VContainer(nullptr, -1, Base::Decl::UNKNWN);
+		}
+		static std::string VCStr(VContainer& v) {
+			switch (v.getDecl()) {
+			case Base::Decl::INT:
+				return std::to_string(v.castRef<int>());
+			case Base::Decl::STRING:
+				return v.castRef<String>().getQuotes();
+			case Base::Decl::FLOAT:
+				return std::to_string(v.castRef<float>());
+			case Base::Decl::BOOL:
+				return v.castRef<bool>() ? "true" : "false";
+			/*case Base::Decl::LIST:
+				return ArrayList::string(v.castRef<ArrayList>());
+				*/ //circular dep, please fix for multiple lists in lists.
+			}
 		}
 		VContainer(std::any a, int dep, Base::Decl decl, std::vector<Base::DeclConfig> d = {}): ValueHolder(a) { configs = d; __depth = dep; this->decl = decl; }
 		VContainer() : ValueHolder(nullptr) { __depth = -1; }
@@ -27,5 +44,14 @@ namespace marine {
 		std::any& get() { return _value; }
 		void set(std::any& a, Base::Decl _new, int dep) { _value = a; decl = _new; __depth = dep; }
 		Base::Decl type() { return decl; }
+		template<typename T>
+		std::string strT() {
+			std::stringstream s;
+			s << "(VCONTAINER) ";
+
+			s << cast<T>().str();
+
+			return s.str();
+		}
 	};
 };

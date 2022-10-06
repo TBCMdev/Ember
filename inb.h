@@ -92,6 +92,11 @@ namespace marine {
 				std::cout << std::any_cast<int>(f[0]) << std::endl;
 
 			}
+			void log_l(std::vector<std::any> l) {
+				auto [list] = cast<ArrayList>(l);
+
+				std::cout << list.str();
+			}
 			marine::VContainer ask(std::vector<std::any> a) {
 				auto [str] = cast<String>(a);
 
@@ -111,7 +116,7 @@ namespace marine {
 		std::vector <inb_action>__NO_INCLUDE_ACTIONS = {
 			{"log", 1, {Base::Decl::STRING},(void*(*)(std::vector<std::any>))inb::console::log_s},
 			{"log", 1, {Base::Decl::INT},(void* (*)(std::vector<std::any>))inb::console::log_i},
-
+			{"log", 1, {Base::Decl::LIST},(void* (*)(std::vector<std::any>))inb::console::log_l},
 		};
 		std::vector<inb_function> __NO_INCLUDE_FUNCTIONS = {
 			{"ask", 1, {Base::Decl::STRING}, (VCONTAINERFUNC)inb::console::ask},

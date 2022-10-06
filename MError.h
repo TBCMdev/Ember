@@ -6,43 +6,29 @@ namespace marine {
 	namespace errors {
 		struct MError : public std::exception {
 		public:
-			const char* what_c;
-			static const char* construct(const char* message, const char* name) {
+			static std::string construct(const char* message, const char* name) {
 				std::stringstream stream;
-				stream << "[" << name << "]" << "Error: " << message;
-				return stream.str().c_str();
+				stream << "[" << name << "] " << message;
+				return stream.str();
 			}
 			//stack trace
-			MError(const char* w): what_c(w){}
-			virtual const char* what() throw() { return what_c; }
+			MError(const char* w): std::exception(w){}
 		};
-		struct SyntaxError : private MError {
-			using MError::MError;
+		struct SyntaxError : public MError {
 		public:
-			const char* what() throw() override {
-				return MError::construct(what_c, "Syntax Error");
-			}
+			SyntaxError(const char* what) : MError(MError::construct(what, "Syntax Error").c_str()) {}
 		};
-		struct IndexError : private MError {
-			using MError::MError;
+		struct IndexError : public MError {
 		public:
-			const char* what() throw() override {
-				return MError::construct(what_c, "Index Out Of Range Error");
-			}
+			IndexError(const char* what) : MError(MError::construct(what, "Index Error").c_str()) {}
 		};
-		struct RuntimeError : private MError {
-			using MError::MError;
+		struct RuntimeError : public MError {
 		public:
-			const char* what() throw() override {
-				return MError::construct(what_c, "Runtime Error");
-			}
+			RuntimeError(const char* what) : MError(MError::construct(what, "Runtime Error").c_str()) {}
 		};
-		struct TypeError : private MError {
-			using MError::MError;
+		struct TypeError : public MError {
 		public:
-			const char* what() throw() override {
-				return MError::construct(what_c, "Type Error");
-			}
+			TypeError(const char* what) : MError(MError::construct(what, "Type Error").c_str()) {}
 		};
 	}
 }
