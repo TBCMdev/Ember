@@ -6,6 +6,8 @@
 #include "ValueHolder.h"
 #include "String.h" 
 #include "Types.h"
+
+
 namespace marine {
 	class StaticObject;
 	class VContainer : public ValueHolder {

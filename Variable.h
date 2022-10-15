@@ -69,21 +69,21 @@ namespace marine {
 			}
 		}
 	public:
-		virtual void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr) { throw marine::errors::RuntimeError("ObjectCallable (function in object) is null."); }
+		virtual void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr, std::vector<Base::Decl>* x = nullptr) { throw marine::errors::RuntimeError("ObjectCallable (function in object) is null."); }
 
 	};
 
-	using LAction = void (*)(std::vector<std::any>, ValueHolder* _this);
+	using LAction = void (*)(std::vector<std::any>, ValueHolder* _this, std::vector<Base::Decl>*);
 
-	using LFunction = marine::VContainer(*)(std::vector<std::any>, ValueHolder* _this);
+	using LFunction = marine::VContainer(*)(std::vector<std::any>, ValueHolder* _this, std::vector<Base::Decl>*);
 
 
 	struct ObjectFunction : public ObjectCallable {
 		LFunction c;
 	public:
 		ObjectFunction(const char* name, Base::Decl returnType, LFunction a, std::vector<Base::Decl> types) : ObjectCallable(name, false, types, &returnType), c(a) {}
-		void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr) override {
-			*v = c(a, _this);
+		void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr, std::vector<Base::Decl>* x = nullptr) override {
+			*v = c(a, _this, x);
 		}
 	};
 
@@ -94,8 +94,8 @@ namespace marine {
 		ObjectCommand(const char* name, LAction a, std::vector<Base::Decl> types) : ObjectCallable(name, false, types), c(a) {
 			std::cout << "created Object Command: " << name << std::endl;
 		}
-		void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr) override {
-			c(a, _this);
+		void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr, std::vector<Base::Decl>* x = nullptr) override {
+			c(a, _this, x);
 		}
 
 	};

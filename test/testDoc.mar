@@ -1,2 +1,3 @@
+list mylist = [1, 2, 5, "iujbivg"]
 
-log()
+mylist.add(55)

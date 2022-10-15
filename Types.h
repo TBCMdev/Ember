@@ -1,9 +1,10 @@
 #pragma once
 #include "Base.h"
 #include "VContainer.h"
-#include "ObjectHandler.h"
 #include "Variable.h"
+
 namespace marine {
+	class ArrayList;
 	template<typename VContainerList>
 	static VContainerList sliceFromLeft(VContainerList& v, int from) {
 		return VContainerList(v.begin() + from, v.end());
@@ -67,6 +68,9 @@ namespace marine {
 		}
 		VContainer get(int l) {
 			return items[l];
+		}
+		int length() {
+			return items.size();
 		}
 		std::vector<VContainer> operateLarge(ListOperator op) {
 			switch (op.getType()) {

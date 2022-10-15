@@ -101,8 +101,6 @@ namespace marine {
 				}
 				auto op = oper->get().value;
 				if (left->isSingular()) {
-					DEBUG("left is singular:" + left->repr());
-					
 					if (right->isSingular()) {
 						switch (left->type) {
 						case Base::Decl::INT:
@@ -301,7 +299,6 @@ namespace marine {
 				else if (right->isSingular()) {
 					switch (left->type) {
 					case Base::Decl::INT:
-						DEBUG("is int");
 						if (op == "+")
 							if (left->isNegated())
 								if (!right->isNegated())
@@ -493,8 +490,6 @@ namespace marine {
 
 		public:
 			VariableNode(std::shared_ptr<Variable> v, bool __negate = false) : internal_value(v), Node(lexertk::token(v->str()), v->getDecl(), __negate) {
-				DEBUG("CREATING VARIABLE NODE");
-				DEBUG(v->str());
 			}
 			bool isVariable() override { return true; }
 			virtual bool isSingular() override {
@@ -502,7 +497,6 @@ namespace marine {
 				//returning false on this method tells the node calc method that it needs to call the overrided calc method to extract the value
 			}
 			virtual std::any calc() override{
-				DEBUG("CALCING VARIABLE NODE");
 				if (internal_value == nullptr) return nullptr;
 				switch (internal_value->getDecl()) {
 				case Base::Decl::INT:
@@ -526,7 +520,6 @@ namespace marine {
 		public:
 			//(new VContainer) needed to keep lifetime of shared ptr, if you use the & of v, v will be destroyed.
 			VCNode(VContainer& v, bool __negate = false) : internal_value(new VContainer(v)), Node(lexertk::token(v.getStringified()), v.type(), __negate) {
-				DEBUG("CREATING VC NODE");
 			}
 			bool isVariable() override { return true; }
 			virtual bool isSingular() override {
@@ -538,8 +531,6 @@ namespace marine {
 			}
 			VContainer* getValue() { return internal_value.get(); }
 			virtual std::any calc() override {
-				DEBUG("CALCING VC NODE");
-				DEBUG(internal_value->getStringified());
 				if (internal_value == nullptr) return nullptr;
 				switch (internal_value->type()) {
 				case Base::Decl::INT:
@@ -547,13 +538,10 @@ namespace marine {
 				case Base::Decl::FLOAT:
 					return internal_value->cast<float>();
 				case Base::Decl::STRING:
-					DEBUG("CALCING STRING");
-					DEBUG(internal_value->get().type().name());
 					return internal_value->cast<String>();
 				case Base::Decl::BOOL:
 					return internal_value->cast<bool>();
 				case Base::Decl::LIST:
-					DEBUG("CALCING LIST...");
 					return internal_value->cast<ArrayList>();
 				default:
 					throw marine::errors::RuntimeError("this type is currently not supported.");
@@ -625,8 +613,6 @@ namespace marine {
 				}
 				case Base::Decl::STRING:
 				{
-					DEBUG("left still var?");
-					DEBUG(left->isVariable());
 					switch (rootRight) {
 					case Base::Decl::INT:
 						break;
@@ -641,8 +627,6 @@ namespace marine {
 				return false;
 			}
 			bool evaluate() {
-				DEBUG(left->isVariable());
-				DEBUG("VAL:"); DEBUG(std::any_cast<int>(left->calc()));
 				Base::Decl rootLeft = Node::getRootNodeType(left.get(), true);
 				Base::Decl rootRight = Node::getRootNodeType(right.get(), false);
 
@@ -678,9 +662,6 @@ namespace marine {
 					case Base::Decl::STRING:
 					{
 						String l = std::any_cast<String>(left->calc());
-						DEBUG("string after call:" + l.get());
-						DEBUG("left still var?");
-						DEBUG(left->isVariable());
 						switch (rootRight) {
 						case Base::Decl::INT:
 							break;

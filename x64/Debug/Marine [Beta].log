@@ -1,28 +1,29 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(514,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (Marine [Beta].vcxproj).  This can lead to incorrect clean and rebuild behavior.
   Ember [beta].cpp
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\ObjectHandler.h(24,27): warning C4091: 'static ': ignored on left of 'ObjectHandler' when no variable is declared
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\ObjectHandler.h(142,2): warning C4091: 'static ': ignored on left of 'ObjectHandler' when no variable is declared
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Types.h(84,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Types.h(73,1): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Types.h(88,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\ObjectHandler.h(21,27): warning C4091: 'static ': ignored on left of 'ObjectHandler' when no variable is declared
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\ObjectHandler.h(165,2): warning C4091: 'static ': ignored on left of 'ObjectHandler' when no variable is declared
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(16,1): warning C4005: 'DEBUG': macro redefinition
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(8): message : see previous definition of 'DEBUG'
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(52,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1247,28): warning C4101: 'ig': unreferenced local variable
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1805,20): warning C4018: '<=': signed/unsigned mismatch
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(825,29): warning C4101: 'ig': unreferenced local variable
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(194): message : see reference to function template instantiation 'Type marine::Parser::parseFuncCall<marine::VContainer>(bool *)' being compiled
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1124,28): warning C4101: 'ig': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1630,20): warning C4018: '<=': signed/unsigned mismatch
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(766,29): warning C4101: 'ig': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(189): message : see reference to function template instantiation 'Type marine::Parser::parseFuncCall<marine::VContainer>(bool *)' being compiled
           with
           [
               Type=marine::VContainer
           ]
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(929,29): warning C4101: 'ig': unreferenced local variable
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(143): warning C4172: returning address of local variable or temporary: null
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(150): warning C4172: returning address of local variable or temporary: null
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\VContainer.h(32): warning C4715: 'marine::VContainer::VCStr': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1149): warning C4715: 'marine::Parser::parseWhileStatement': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1577): warning C4715: 'marine::Parser::parseVariableUsage': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(701): warning C4715: 'marine::ext::BoolExpr::evaluate': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1429): warning C4715: 'marine::Parser::parseSafeVariableUsage': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(113): warning C4172: returning address of local variable or temporary: v
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(597): warning C4715: 'marine::ext::BoolExpr::repr': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(853,29): warning C4101: 'ig': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(140): warning C4172: returning address of local variable or temporary: null
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(133): warning C4172: returning address of local variable or temporary: null
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\VContainer.h(34): warning C4715: 'marine::VContainer::VCStr': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1049): warning C4715: 'marine::Parser::parseWhileStatement': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1419): warning C4715: 'marine::Parser::parseVariableUsage': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(682): warning C4715: 'marine::ext::BoolExpr::evaluate': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1286): warning C4715: 'marine::Parser::parseSafeVariableUsage': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(112): warning C4172: returning address of local variable or temporary: v
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(585): warning C4715: 'marine::ext::BoolExpr::repr': not all control paths return a value
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\helpers.h(74): warning C4715: 'marine::isBool': not all control paths return a value
   Marine [Beta].vcxproj -> C:\Users\krist\source\repos\Marine [Beta]\x64\Debug\Ember [Beta].exe

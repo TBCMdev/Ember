@@ -8,11 +8,9 @@
 #include "VContainer.h"
 #include "Variable.h"
 
-#define STATIC_OBJ_FUNC [](std::vector<std::any> a, ValueHolder* self) -> VContainer
-
+#define STATIC_OBJ_FUNC [](std::vector<std::any> a, ValueHolder* self, std::vector<Base::Decl>* help) -> VContainer
+#define STATIC_OBJ_ACTION [](std::vector<std::any> a, ValueHolder* self, std::vector<Base::Decl>* help)
 using namespace marine;
-
-
 
 VContainer makeContainer(std::any obj, Base::Decl d) {
 	return VContainer(obj, -1, d);
@@ -20,10 +18,7 @@ VContainer makeContainer(std::any obj, Base::Decl d) {
 
 
 
-
 static class ObjectHandler;
-
-
 static class ObjectHandler {
 private:
 	std::vector<StaticObject> precompiledObjects;
@@ -75,7 +70,7 @@ public:
 				}, {}},
 			  {"toLower",Base::Decl::STRING, STATIC_OBJ_FUNC{
 				 std::string copy = self->cast<String>().getCopy();
-				 
+
 				 std::transform(copy.begin(), copy.end(),copy.begin(), [](unsigned char c) { return std::tolower(c); });
 				 return makeContainer(String::noTrim(copy), Base::Decl::STRING);
 
@@ -86,7 +81,7 @@ public:
 				if (i < 0) {
 					i = (int)(x.length() + i);
 				}
-				 
+
 				 return makeContainer(String::noTrim(std::string(1, x[i])), Base::Decl::STRING);
 
 				}, {Base::Decl::INT}},
@@ -101,13 +96,41 @@ public:
 
 					return makeContainer(ret, Base::Decl::BOOL);
 
-				}, {Base::Decl::STRING}}
+				}, {}}
 
 			},
 			 {
 				 //MEMBERS
-			})
-			});//INT
+			}), StaticObject("list",
+				{
+					//COMMANDS
+					{"add", STATIC_OBJ_ACTION{
+						ArrayList & _this = self->castRef<ArrayList>();
+						for (const auto& x : *help) {
+							std::cout << "ELEMENT:" << Base::declStr(x) << std::endl;
+						}
+				}
+						
+					, {Base::Decl::RUNTIME_DECIDED}}
+				},
+				{
+					//FUNCS
+					{"length", Base::Decl::INT, STATIC_OBJ_FUNC{
+						ArrayList _this = self->cast<ArrayList>();
+						return makeContainer(_this.length(), Base::Decl::INT);
+					}, {}}
+				},
+				{
+					//MEMBERS
+				}
+				) 
+			
+			
+			
+			
+			
+			
+			});
 		return handler;
 	}
 #pragma endregion
@@ -140,3 +163,4 @@ public:
 		return StaticObject::null();
 	}
 };
+

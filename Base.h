@@ -3,7 +3,7 @@
 #include <string>
 #include "helpers.h"
 
-constexpr bool MARINE__DEBUG = true;
+constexpr bool MARINE__DEBUG = false;
 
 
 
@@ -24,6 +24,7 @@ public:
 		DYNAMIC_OBJECT,
 		STATIC_OBJECT,
 		CUSTOM,
+		RUNTIME_DECIDED,
 		UNKNWN
 	};
 	enum class DeclConfig {

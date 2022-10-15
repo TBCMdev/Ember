@@ -9,7 +9,7 @@
 #include <variant>
 #include <tuple>
 #include "String.h"
-#define VCONTAINERFUNC marine::VContainer(*)(std::vector<std::any>)
+#define VCONTAINERFUNC marine::VContainer(*)(std::vector<std::any>, std::vector<Base::Decl>*)
 
 using std::string;
 
@@ -31,9 +31,9 @@ namespace marine {
 #pragma region function_converters
 #pragma endregion
 #pragma region internal_backend
-		using Action = void* (*)(std::vector<std::any>);
+		using Action = void* (*)(std::vector<std::any>, std::vector<Base::Decl>*);
 
-		using Function = marine::VContainer (*)(std::vector<std::any>);
+		using Function = marine::VContainer (*)(std::vector<std::any>, std::vector<Base::Decl>*);
 
 
 		struct IFunc {
@@ -49,7 +49,7 @@ namespace marine {
 			int parameter_count;
 			std::vector <Base::Decl> paramTypes;
 
-			virtual void call(std::vector<std::any> a, marine::VContainer* v = nullptr) {
+			virtual void call(std::vector<std::any> a, marine::VContainer* v = nullptr, std::vector<Base::Decl>* help = nullptr) {
 				throw marine::errors::RuntimeError(" a callable cannot contain no callable item.");
 			}
 
@@ -58,8 +58,8 @@ namespace marine {
 			Action callable;
 
 
-			void call(std::vector<std::any> a, marine::VContainer* ignored = nullptr) override {
-				callable(a);
+			void call(std::vector<std::any> a, marine::VContainer* ignored = nullptr, std::vector<Base::Decl>* help = nullptr) override {
+				callable(a, help);
 			}
 		public:
 			inb_action(const char* n, int param_c, std::vector<Base::Decl> param_types, Action c) : callable(c) {
@@ -71,9 +71,9 @@ namespace marine {
 		struct inb_function: public Callable {
 			Function callable;
 
-			void call(std::vector<std::any> a, marine::VContainer* v) override {
+			void call(std::vector<std::any> a, marine::VContainer* v, std::vector<Base::Decl>* help = nullptr) override {
 				
-				*v = callable(a);
+				*v = callable(a, help);
 			}
 		public:
 			inb_function(const char* n, int param_c, std::vector<Base::Decl> param_types, Function c) : callable(c) {
@@ -85,19 +85,19 @@ namespace marine {
 		};
 #pragma endregion
 		namespace console {
-			void log_s(std::vector<std::any> x) {
+			void log_s(std::vector<std::any> x, std::vector<Base::Decl>* info) {
 				std::cout << std::any_cast<String>(x[0]).get() << std::endl;
 			}
-			void log_i(std::vector<std::any> f) {
+			void log_i(std::vector<std::any> f, std::vector<Base::Decl>* info) {
 				std::cout << std::any_cast<int>(f[0]) << std::endl;
 
 			}
-			void log_l(std::vector<std::any> l) {
+			void log_l(std::vector<std::any> l, std::vector<Base::Decl>* info) {
 				auto [list] = cast<ArrayList>(l);
 
 				std::cout << list.str();
 			}
-			marine::VContainer ask(std::vector<std::any> a) {
+			marine::VContainer ask(std::vector<std::any> a, std::vector<Base::Decl>* info) {
 				auto [str] = cast<String>(a);
 
 				std::cout << str.get();
@@ -114,9 +114,9 @@ namespace marine {
 			}
 		};
 		std::vector <inb_action>__NO_INCLUDE_ACTIONS = {
-			{"log", 1, {Base::Decl::STRING},(void*(*)(std::vector<std::any>))inb::console::log_s},
-			{"log", 1, {Base::Decl::INT},(void* (*)(std::vector<std::any>))inb::console::log_i},
-			{"log", 1, {Base::Decl::LIST},(void* (*)(std::vector<std::any>))inb::console::log_l},
+			{"log", 1, {Base::Decl::STRING},(void*(*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_s},
+			{"log", 1, {Base::Decl::INT},(void* (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_i},
+			{"log", 1, {Base::Decl::LIST},(void* (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_l},
 		};
 		std::vector<inb_function> __NO_INCLUDE_FUNCTIONS = {
 			{"ask", 1, {Base::Decl::STRING}, (VCONTAINERFUNC)inb::console::ask},
@@ -125,16 +125,6 @@ namespace marine {
 
 
 
-		void call_no_include(IFunc _definer) {
-			for (auto& v : __NO_INCLUDE_ACTIONS) {
-				if (v.name == _definer.name && v.parameter_count == _definer._param_c && v.paramTypes == _definer.paramDeclTypes) {
-					//std::cout << "[debug inb] CALLING: " << v.name << ", with param count of:" << v.parameter_count << std::endl;
-					v.callable(_definer.parameters);
-					return;
-				}
-			}
-			std::cout << "could not find function to call." << std::endl;
-		}
 		inb_action& getNoIncludeActionByName(std::string& name, std::vector<Base::Decl> paramTypes) {
 			for (auto& v : __NO_INCLUDE_ACTIONS) {
 				if (v.name == name && v.paramTypes == paramTypes) return v;
