@@ -32,6 +32,7 @@ public:
 		std::stringstream s;
 		s << name << " took " << ms << "ms" << "\n";
 		marine::out::stpr(s.str().c_str(), marine::out::STATUS::WARN);
+
 	}
 
 };
@@ -121,7 +122,6 @@ public:
 		for (int i = 1; i < argc; ++i)
 			this->tokens.push_back(std::string(argv[i]));
 	}
-	/// @author iain
 	const std::string& getCmdOption(const std::string& option) const
 	{
 		std::vector<std::string>::const_iterator itr;
@@ -133,7 +133,6 @@ public:
 		static const std::string empty_string("");
 		return empty_string;
 	}
-	/// @author iain
 	bool cmdOptionExists(const std::string& option) const
 	{
 		return std::find(this->tokens.begin(), this->tokens.end(), option) != this->tokens.end();
@@ -154,13 +153,13 @@ inline bool _compile(string fc, bool runCompileAfter)
 		p.parse();
 	}
 	std::cout << "\n\n";
-	for (auto x : p.getVariables()) {
-		std::cout << x.str() << std::endl;
+	for (auto& x : p.getVariables()) {
+		std::cout << x->str() << std::endl;
 	}
 	return true;
 }
 int main(int argc, char* argv[]) {
-	MTimer x("main(int args, char* argv[])");
+	MTimer x("_compile(std::string& x)");
 	try {
 		_compile(fileManager::readFileIntoString(argv[1]), false);
 	}

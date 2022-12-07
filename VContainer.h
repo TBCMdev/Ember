@@ -3,10 +3,9 @@
 #include <vector>
 #include <iostream>
 #include "Base.h"
+#include "Types.h"
 #include "ValueHolder.h"
 #include "String.h" 
-#include "Types.h"
-
 
 namespace marine {
 	class StaticObject;
@@ -47,6 +46,7 @@ namespace marine {
 		void set(std::any& a, Base::Decl _new, int dep) { _value = a; decl = _new; __depth = dep; }
 		Base::Decl type() { return decl; }
 		template<typename T>
+		
 		std::string strT() {
 			std::stringstream s;
 			s << "(VCONTAINER) ";

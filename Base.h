@@ -2,9 +2,7 @@
 #include <iostream>
 #include <string>
 #include "helpers.h"
-
 constexpr bool MARINE__DEBUG = false;
-
 
 
 class Base {
@@ -65,6 +63,10 @@ public:
 			return "custom";
 		case Decl::LIST:
 			return "list";
+		case Decl::RUNTIME_DECIDED:
+			return "any_type";
+		case Decl::STATIC_OBJECT:
+			return "Class";
 		default:
 			return "unknown";
 		}
@@ -82,6 +84,7 @@ public:
 		if (t.value == "bool") return Decl::BOOL;
 		if (t.value == "list") return Decl::LIST;
 		if (t.value == "obj") return Decl::DYNAMIC_OBJECT;
+		if (t.value == "any") return Decl::RUNTIME_DECIDED;
 		return Decl::UNKNWN;
 	}
 	static bool is(lexertk::token& t, const char* x) {

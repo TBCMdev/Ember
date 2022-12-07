@@ -18,25 +18,41 @@ namespace marine {
 		Variable(std::string& _name, std::any val, lexertk::token& _orig, std::vector <Base::DeclConfig> _configs) : orig(_orig), ValueHolder(val), name(_name)
 		{
 			configs = _configs;
+			setName(_name);
 		}
 		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs) :ValueHolder(val), name(_name)
 		{
 			__hasToken = false;
 			configs = _configs;
+			setName(_name);
+		}
+		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs, int depth) :ValueHolder(val), name(_name)
+		{
+			__hasToken = false;
+			configs = _configs;
+			setName(_name);
+			__depth = depth;
 		}
 		Variable(std::string& _name, std::any val, std::string _origStr, std::vector <Base::DeclConfig> _configs) : orig(_origStr), ValueHolder(val), name(_name)
 		{
 			__hasToken = false;
 			configs = _configs;
+			setName(_name);
 		}
 		Variable(std::any val) : ValueHolder(val)
 		{
 			__hasToken = false;
+			std::string null = "";
+			setName(null);
 		}
 		void setToken(lexertk::token& t) { orig = t; };
 		void loseStringTrace() { orig = lexertk::token("UNTRACABLE"); }
 		template <typename T>
-		void setTokenStr(T s) { orig = lexertk::token(anyToStr<T>(s)); }
+		void setTokenStr(T s) {
+			std::stringstream y;
+			y << s;
+			orig = lexertk::token(y.str());
+		}
 		std::string getName() { return name; }
 		lexertk::token& getToken() { return orig; }
 		virtual std::string str() override {
@@ -92,7 +108,6 @@ namespace marine {
 		LAction c;
 	public:
 		ObjectCommand(const char* name, LAction a, std::vector<Base::Decl> types) : ObjectCallable(name, false, types), c(a) {
-			std::cout << "created Object Command: " << name << std::endl;
 		}
 		void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr, std::vector<Base::Decl>* x = nullptr) override {
 			c(a, _this, x);
@@ -182,7 +197,7 @@ namespace marine {
 			return false;
 		}
 		ObjectCallable* getFunction(std::string n) {
-			for (auto x : functions) {
+			for (auto& x : functions) {
 				if (x->name == n) return x.get();
 			}
 			return nullptr;

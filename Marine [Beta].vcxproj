@@ -145,13 +145,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base.h" />
+    <ClInclude Include="Class.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="inb.h" />
+    <ClInclude Include="Iterable.h" />
     <ClInclude Include="lexertk.hpp" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="MError.h" />
     <ClInclude Include="Operator.h" />
     <ClInclude Include="Parser.h" />
+    <ClInclude Include="Scope.h" />
+    <ClInclude Include="Serialized.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="ValueHolder.h" />
   </ItemGroup>

@@ -228,7 +228,12 @@ namespace lexertk
             e_string = 9, e_assign = 10, e_shr = 11,
             e_shl = 12, e_lte = 13, e_ne = 14,
             e_gte = 15, e_inc = 16, e_dec = 17, e_mults = 18,
-            e_divs = 19, e_lt = '<', e_gt = '>',
+            e_divs = 19,
+            /*MODIFIED*/
+            m_larr = 20,
+            m_retarr = 20,
+            /*MODIFIED*/
+            e_lt = '<', e_gt = '>',
             e_eq = '=', e_rbracket = ')', e_lbracket = '(',
             e_rsqrbracket = ']', e_lsqrbracket = '[', e_rcrlbracket = '}',
             e_lcrlbracket = '{', e_comma = ',', e_add = '+',
@@ -631,6 +636,10 @@ namespace lexertk
                 else if ((c0 == '*') && (c1 == '=')) ttype = token_t::e_mults;
                 else if ((c0 == '/') && (c1 == '=')) ttype = token_t::e_divs;
 
+
+                //MODIFIED
+                else if ((c0 == '=') && (c1 == '>')) ttype = token_t::m_larr;
+                else if ((c0 == '-') && (c1 == '>')) ttype = token_t::m_retarr;
 
 
 

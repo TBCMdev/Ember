@@ -12,7 +12,7 @@ namespace marine {
 		Base::Decl decl = Base::Decl::UNKNWN;
 		std::vector <Base::DeclConfig> configs{};
 		std::shared_ptr<StaticObject> connected_obj = nullptr;
-
+		std::shared_ptr<std::string> _name = nullptr;
 
 		bool __hasToken = true;
 		std::any _value;
@@ -30,10 +30,14 @@ namespace marine {
 			return stream.str() + "]";
 		}
 		int getDepth() { return __depth; }
-		void setDepth(unsigned int depth) { __depth = depth; }
-		void setDecl(Base::Decl d) {
-			this->decl = d;
+		void setDepth(unsigned int depth) {
+			__depth = depth; 
 		}
+		void setDecl(Base::Decl d) {
+			decl = d;
+		}
+		std::string& getName() { return *_name.get(); }
+		void setName(std::string& x) { _name = std::make_shared<std::string>(x); }
 		Base::Decl getDecl() { return decl; }
 		std::any& getValue() { return _value; }
 

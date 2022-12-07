@@ -2,7 +2,8 @@
 #include "Base.h"
 #include "VContainer.h"
 #include "Variable.h"
-
+#include "Serialized.h"
+#include "Iterable.h"
 namespace marine {
 	class ArrayList;
 	template<typename VContainerList>
@@ -45,18 +46,18 @@ namespace marine {
 			return type;
 		}
 	};
-	class ArrayList {
+	class ArrayList : public Serialized, public Iterable{
+		
 	protected:
-		std::vector<VContainer> items;
+		std::vector < VContainer > items;
 		std::vector<Base::Decl> types;
-		int size = -1;
 	public:
 		static std::string string(ArrayList& x) {
 			return x.str();
 		}
-		ArrayList(std::vector<VContainer> _items = {}, int _size = -1) : items(_items), size(_size){
+		ArrayList(std::vector<VContainer> _items = {}) : items(_items), Serialized(), Iterable() {
 		}
-		ArrayList(std::vector<Base::Decl> v): types(v) {
+		ArrayList(std::vector<Base::Decl> v) : types(v), Serialized(), Iterable() {
 
 		}
 		void add(VContainer& existing) {
@@ -66,11 +67,14 @@ namespace marine {
 		void add(T v, int depth, Base::Decl x, std::vector<Base::DeclConfig> y = {}) {
 			items.push_back(VContainer(v, depth, x, y));
 		}
+		VContainer* getItemRef(int l) {
+			return &(items[l]);
+		}
 		VContainer get(int l) {
 			return items[l];
 		}
 		int length() {
-			return items.size();
+			return (int)items.size();
 		}
 		std::vector<VContainer> operateLarge(ListOperator op) {
 			switch (op.getType()) {
@@ -94,6 +98,9 @@ namespace marine {
 			s << "]";
 
 			return s.str();
+		}
+		std::string serialize() override {
+			return str();
 		}
 	};
 	

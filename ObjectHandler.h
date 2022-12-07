@@ -106,10 +106,10 @@ public:
 					//COMMANDS
 					{"add", STATIC_OBJ_ACTION{
 						ArrayList & _this = self->castRef<ArrayList>();
-						for (const auto& x : *help) {
-							std::cout << "ELEMENT:" << Base::declStr(x) << std::endl;
-						}
-				}
+						std::any& x = a[0];
+						_this.add(x, -1, (*help)[0]);
+
+					}
 						
 					, {Base::Decl::RUNTIME_DECIDED}}
 				},
