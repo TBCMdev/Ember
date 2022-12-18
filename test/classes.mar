@@ -1,0 +1,29 @@
+class Person 
+{
+[public]
+	int age
+	string name
+	constructor(int a, string n) => age(a), name(n)
+	{
+		log("constructing!")
+	}
+	method ageUp(int n)
+	{
+		age += n
+	}
+	method getAge(){
+		return age
+	}
+	method die(){
+	
+		age = -1
+	}
+}
+
+Person s = new Person(44, "Kevin")
+
+s.ageUp(4)
+
+int myAgeCopy = s.getAge()
+
+log(myAgeCopy)

@@ -1,22 +1,4 @@
-class Person 
-{
-[public]
-	int age
-	string name
-	constructor(int a, string n) => age(a), name(n)
-	{
-		log("constructing!")
-	}
-	method ageUp(int n)
-	{
-		age = age + n
-	}
-	method die(){
-	
-		age = -1
-	}
-}
+use importme
 
-Person person = new Person(17, "marina")
-
-log(person.age)
+log("done importing!")
+printSomething(44)

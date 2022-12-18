@@ -172,3 +172,9 @@ ARRAY (LIST):
 			string fileContent = read(filePath)
 
 			List[String] lines = readLines(filePath)
+
+
+--USING FILES--
+
+	first (0): use <name (.?...)> (from <source(.?...)>)?
+	second (1): from <source(.?...)> use <name(.?...)>

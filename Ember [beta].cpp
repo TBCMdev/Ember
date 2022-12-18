@@ -43,9 +43,6 @@ static bool debug = false;
 class fileManager
 {
 public:
-	static void precompile(lexertk::generator* l) {
-
-	}
 	static lexertk::generator compile(string fc, bool debug = false) // fc = file content
 	{
 		lexertk::generator generator;
@@ -143,16 +140,21 @@ private:
 
 
 };
-inline bool _compile(string fc, bool runCompileAfter)
-{
-	lexertk::generator gen(fileManager::compile(fc, false));
+inline bool _compile(string fc, bool runCompileAfter, char* relativePath)
+{	
 
+	lexertk::generator gen(fileManager::compile(fc, false));
 	marine::Parser p(gen);
+	
+	std::string y = relativePath;
+	size_t at = y.find_last_of("/\\");
+	y = y.substr(0, at);
+	p.setRelativeRunningDirectory(y);
 	p.advance();
 	while (p.canAdvance()) {
 		p.parse();
 	}
-	std::cout << "\n\n";
+	std::cout << "\n\n\n";
 	for (auto& x : p.getVariables()) {
 		std::cout << x->str() << std::endl;
 	}
@@ -161,7 +163,7 @@ inline bool _compile(string fc, bool runCompileAfter)
 int main(int argc, char* argv[]) {
 	MTimer x("_compile(std::string& x)");
 	try {
-		_compile(fileManager::readFileIntoString(argv[1]), false);
+		_compile(fileManager::readFileIntoString(argv[1]), false, argv[1]);
 	}
 	catch (marine::errors::MError& m) {
 		std::string ref("[ERROR] ");

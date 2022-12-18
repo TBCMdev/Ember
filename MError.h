@@ -30,5 +30,9 @@ namespace marine {
 		public:
 			TypeError(const char* what) : MError(MError::construct(what, "Type Error").c_str()) {}
 		};
+		struct FileError : public MError {
+		public:
+			FileError(const char* what) : MError(MError::construct(what, "File Error").c_str()) {}
+		};
 	}
 }

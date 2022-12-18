@@ -28,7 +28,6 @@ namespace marine {
 				//std::cout << "getting root node type of:" << _left.repr() << std::endl;
 				auto ltype = getRootNodeType(_left.get(), true);
 				auto rtype = getRootNodeType(_right.get(), false);
-
 				//std::cout << Base::declStr(ltype) << ", " << Base::declStr(rtype) << std::endl;
 				if (ltype != rtype) throw errors::MError("performing arithmatic on two types that are not supported is not allowed");
 

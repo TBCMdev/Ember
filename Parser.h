@@ -14,7 +14,7 @@
 #include "ObjectHandler.h"
 #include "Class.h"
 #include "Scope.h"
-
+#include "Importer.h"
 
 
 #define DEBUG(x) if (MARINE__DEBUG) std::cout << "[debug] " << x << "\n"
@@ -26,6 +26,9 @@ using namespace marine::out;
 namespace marine {
 	class Parser {
 	protected:
+
+		std::string m_relative_running_dir;
+
 		lexertk::generator& gen;
 		lexertk::token current;
 		Scope scope;
@@ -37,13 +40,17 @@ namespace marine {
 		int end_range;
 	public:
 		auto& getVariables() { return scope.getVariables(); }
+		auto& getFunctions() { return scope.getFunctions(); }
 		Parser(lexertk::generator& generator) : gen(generator) {
 			
 			end_range = generator.size();
 		}
 		Parser(lexertk::generator& generator, unsigned int s_range, unsigned int e_range) : gen(generator), start_range(s_range), end_range(e_range), index(start_range) {}
 #pragma region decl
-		void incDepth() { depth++; std::cout << "inc depth:" << depth << "\n"; }
+		void setRelativeRunningDirectory(std::string& x) {
+			m_relative_running_dir = x;
+		}
+		void incDepth() { depth++; }
 		void decDepth() {
 			depth--;
 			std::vector<std::shared_ptr<ValueHolder>>::iterator iter;
@@ -51,19 +58,117 @@ namespace marine {
 			for (iter = vars.begin(); iter != vars.end();) {
 				std::shared_ptr<ValueHolder>& var = *iter._Ptr;
 				if (var->getDepth() > depth) {
-					std::cout << "removing var:" << var->getName() << '\n';
 					iter = vars.erase(iter);
 				}
 				else ++iter;
-			}
-			for (auto& x : scope.getVariables()) {
-				std::cout << "VARS REMAINING:" << x->getName() << "\n";
 			}
 		}
 		bool isDecl() {
 			//std::cout << "is decl? " << cur().value << (Base::declareParse(cur()) != Base::Decl::UNKNWN || ClassHandler::hasClass(cur().value)) << '\n';
 			return Base::declareParse(cur()) != Base::Decl::UNKNWN || ClassHandler::hasClass(cur().value);
 		}
+
+		void _import() {
+			int import_type = 0;
+			bool hasFrom = false;
+
+			if (Base::is(cur(), "use")) {
+				import_type = 0;
+			}
+			else if (Base::is(cur(), "from")) {
+				import_type = 1;
+				hasFrom = true;
+			}
+			if (import_type == 1) {
+				/*std::function<bool(std::string&)> validateImport = [](std::string& x) {
+					return (std::any_of(x.begin(), x.end(), [](char& x) {
+						return (!isdigit(x) && !isalpha(x) && x != '_');
+					}));
+				};*/
+				std::string source = String::trim(advance().value);
+
+				if (!Base::is(advance(), "use")) throw marine::errors::SyntaxError("expected 'use' keyword following from import statement.");
+				std::vector<std::string*> from;
+				
+				while (canAdvance()) {
+					from.push_back(&advance().value);
+					//std::string& back = *from.back();
+					//if (!validateImport(back)) throw marine::errors::SyntaxError("imported names cannot contain characters other than letters numbers, or an underscore.");
+					if (!Base::is(getNext(), ".")) break;
+					advance();
+				}
+				if (!Importer::importExists(source, m_relative_running_dir)) throw marine::errors::SyntaxError("Import does not exist.");
+				//start import.
+				std::string s = Importer::readImport(source);
+
+				lexertk::generator g = Importer::parseImport(s);
+				//all works!
+
+				Parser p(g);
+
+				p.setRelativeRunningDirectory(m_relative_running_dir);
+				p.advance();
+				while (p.canAdvance()) {
+					p.parse();
+				}
+
+				//concat changes
+				auto& vec = scope.getVariables();
+				auto& vecC = p.getVariables();
+				
+				//vec.insert(vec.end(), vecC.begin(), vecC.end()); ? We need to scan the vectors for what we are looking for, after implementation of modules
+
+				auto& vecF = scope.getFunctions();
+				auto& vecFC = p.getFunctions();
+
+				//vecF.insert(vecF.end(), vecFC.begin(), vecFC.end());
+			}
+			else {
+				// use <name> (.?...) (from <source (.?...)>?)
+				std::vector<std::string*> _using;
+				while (canAdvance()) {
+					_using.push_back(&advance().value);
+					//std::string& back = *from.back();
+					//if (!validateImport(back)) throw marine::errors::SyntaxError("imported names cannot contain characters other than letters numbers, or an underscore.");
+					if (!Base::is(getNext(), ".")) break;
+					advance();
+				}
+				if (Base::is(getNext(), "from")) {
+					std::string source = String::trim(advance(2).value);
+
+					if (!Importer::importExists(source, m_relative_running_dir)) throw marine::errors::SyntaxError("Import does not exist.");
+					//start import.
+					std::string s = Importer::readImport(source);
+
+					lexertk::generator g = Importer::parseImport(s);
+				}
+				else {
+					// default use <name> 
+					std::string source = String::trim(*_using.back());
+					if (!Importer::importExists(source, m_relative_running_dir)) throw marine::errors::SyntaxError("Import does not exist.");
+					//start import.
+					std::string s = Importer::readImport(source);
+
+					lexertk::generator g = Importer::parseImport(s);
+
+					//concat the file on top.
+					lexertk::generator::merge(gen, g);
+					int recr_index = index;
+
+					setCaret(0);
+
+					//start reparsing from the indexes
+					int end = g.size();
+					while (index < end) {
+						std::cout << "parsing: " << cur().value << '\n';
+						parse();
+					}
+					setCaret(recr_index);
+				}
+			}
+		}
+
+
 		bool CheckINBLibraryDecl() {
 			if (!inb::matchINBLibraryName(cur().value)) return false;
 			if (Base::is(getNext(), ".")) {
@@ -119,7 +224,7 @@ namespace marine {
 			}
 			return false;
 		}
-		bool isFuncCall(signed int index) {
+		bool isFuncCall(int index) {
 			if (index + 2 > gen.size()) return false;
 			if (Base::is(gen[index + 1], "(")) {
 				int br = 1;
@@ -679,7 +784,6 @@ namespace marine {
 				}
 				else {
 					VContainer out = parseVariableUsage();
-
 					n = std::make_unique<VCNode>(out);
 					determined = out.getDecl();
 				}
@@ -695,12 +799,12 @@ namespace marine {
 			if (take != nullptr) {
 				*take = n->calc();
 				*takeDecl = determined;
+				return Type{};
+				//[TODO] make seperate function for non type param finding.
 			}
-			else {
-				finalVal = std::any_cast<Type>(n->calc());
-				//should only have one node
-				return finalVal;
-			}
+			finalVal = std::any_cast<Type>(n->calc());
+			//should only have one node
+			return finalVal;
 		}
 		Variable parseClassInstantiation(std::string& name, std::string& var_name) {
 			std::shared_ptr<Class>& c = ClassHandler::getClassByName(name);
@@ -839,7 +943,8 @@ namespace marine {
 				if (conf.size() == 0) throw errors::SyntaxError("no config state was supplied after ':'");
 			}
 			lexertk::token& decl_name = advance();
-			if (Base::is(advance(), "=")) {
+			if (Base::is(getNext(), "=")) {
+				advance();
 				//IT IS VARIABLE
 				//just handle numbers for now
 				bool setDepth = false;
@@ -897,6 +1002,7 @@ namespace marine {
 			}
 			else {
 				//lone var with no value
+				advance();
 				Variable ret(decl_name.value, nullptr, "NULL", conf);
 				ret.setDecl(type);
 				if (push)scope.addVariable(ret);
@@ -1017,6 +1123,7 @@ namespace marine {
 			std::shared_ptr<Function>& f = structure->constructor->_this;
 			ClassInstance instance = parent->instantiate();
 
+			scope.setLists(&instance);
 
 
 			//CALL CONSTRUCTOR
@@ -1065,7 +1172,7 @@ namespace marine {
 					}
 					allDecls.push_back(p.getDecl());
 					variables.push_back(p);
-					scope.addVariable(p);
+					//scope.addVariable(p);
 				}
 				catch (std::exception& ig) {
 					throw marine::errors::IndexError("function parameter either does not exist or you have exceeded the amount of parameters the function is asking for.");
@@ -1074,24 +1181,17 @@ namespace marine {
 				advance();
 			}
 			//FUNC EXECUTION
-			scope.setLists(&instance);
 
 			incDepth();
 			//throw "TESTING";
-			for (auto& _x : variables) _x.setDepth(depth);
-
-
 			scope.addFunctionParameters(&variables);
 			DEBUG("starting inits...");
-
-
 			for (auto& _y : *structure->constructor->initializers) {
-				DEBUG("SETTING VALUE OF "); DEBUG(_y.initialized.value); DEBUG(" TO VAL OF: "); DEBUG(_y.initializer.value);
 				Variable& id = getVariable(_y.initialized);
 				Variable& ie = getVariable(_y.initializer);
 				std::any& any = id.getValue();
 				// for some reason std::make_any resolves a stack 0x0... error?!
-				// std:any = operator needs value with no address apparently (&&)
+				// std::any = operator needs value with no address apparently (&&)
 				any = std::any(ie.getValue());
 			}
 			DEBUG("done inits.");
@@ -1108,18 +1208,13 @@ namespace marine {
 					break;
 				}
 			}
-			std::cout << "depth finished at:" << depth << "\n";
-			scope.popStack();
 			decDepth();
-			for (auto& x : scope.getVariables()) {
-				std::cout << "var:" << x->getName() << " - internal depth:" << depth << '\n';
-			}
+			scope.popStack();
 			setCaret(c);
 			return Variable(var_name, instance, {}, depth);
 		}
 		template<typename Type>
 		Type parseFuncCall(bool* return_parent = nullptr) {
-			std::cout << ("FUNC CALL AT:" + cur().value) << "\n";
 			lexertk::token& name = cur();
 
 			int br = 0;
@@ -1268,7 +1363,9 @@ namespace marine {
 
 							}
 						}
-						else if(c->parameter_count == -1) {
+						else if (c->parameter_count == -1) {
+							
+							//std::cout << "parsing parameter...";
 							//unknown parameter!
 							std::any raw;
 							Base::Decl rawDecl;
@@ -1278,6 +1375,7 @@ namespace marine {
 							case Base::Decl::INT:
 								parameters.push_back(std::any_cast<int> (raw));
 								allDecls.push_back(Base::Decl::INT);
+
 								break;
 							case Base::Decl::FLOAT:
 								parameters.push_back(std::any_cast<float> (raw));
@@ -1290,6 +1388,10 @@ namespace marine {
 							case Base::Decl::LIST:
 								parameters.push_back(std::any_cast<ArrayList> (raw));
 								allDecls.push_back(Base::Decl::LIST);
+								break;
+							case Base::Decl::DYNAMIC_OBJECT:
+								parameters.push_back(std::any_cast<DynamicObject> (raw));
+								allDecls.push_back(Base::Decl::DYNAMIC_OBJECT);
 								break;
 							}
 						}
@@ -1344,6 +1446,7 @@ namespace marine {
 
 		while(canAdvance()){
 			advance();
+			// [ERR] when importing, program thinks before the closing '}', it is end of file.
 			if (Base::is(cur(), "{")) {
 				foundbr = true;
 				cbrcount++;
@@ -1356,17 +1459,14 @@ namespace marine {
 				break;
 			}
 		}
-
 		if (end_index == -1) throw marine::errors::MError("something unexpected happened.");
 
 
 		decDepth();
 		Function func(name, start, end, start_index, end_index, parameters);
 
-		if(push)scope.addFunction(func);
-		else {
-			return func;
-		}
+		if (push) scope.addFunction(func);
+		return func;
 	}
 	bool isComment() {
 		return Base::is(cur(), "#");
@@ -1526,6 +1626,96 @@ namespace marine {
 
 		}
 	}
+	marine::VContainer parseClassFunctionReference(ClassInstance* structure) {
+		auto& f = structure->getFunction(cur().value)->_this;
+
+		int br = 0;
+		int param = 0;
+
+		incDepth();
+		std::vector<Variable> variables;
+		std::vector<Base::Decl> allDecls;
+
+		int nbr_i = 0;
+
+
+		scope.setLists(structure);
+
+		advance();
+		while (canAdvance()) {
+			if (Base::is(cur(), "(")) br++;
+			else if (Base::is(cur(), "[")) nbr_i++;
+			else if (Base::is(cur(), ")")) br--;
+			else if (Base::is(cur(), "]")) nbr_i--;
+			if (Base::is(cur(), ",") && br == 1) {
+				param++;
+			}
+
+
+			if (br == 0) break;
+			if (f->parameters.size() == 0) { advance(); continue; }
+
+			try {
+				Variable& p = f->parameters[param];
+				switch (p.getDecl()) {
+				case Base::Decl::INT: {
+					auto ret = parseExtParam<int>();
+					p.setValue(ret);
+					p.setTokenStr(ret);
+					break;
+				}
+				case Base::Decl::FLOAT: {
+					auto ret = parseExtParam<float>(Base::Decl::FLOAT);
+					p.setValue(ret);
+					p.setTokenStr(ret);
+					break;
+				}
+				case Base::Decl::STRING: {
+					auto ret = parseExtParam<String>();
+					p.setValue(ret);
+					p.setTokenStr(ret.get());
+					break;
+				}
+
+				}
+				allDecls.push_back(p.getDecl());
+				variables.push_back(p);
+				scope.addVariable(p);
+			}
+			catch (std::exception& ig) {
+				throw marine::errors::IndexError("function parameter either does not exist or you have exceeded the amount of parameters the function is asking for.");
+			}
+
+			advance();
+		}
+		//FUNC EXECUTION
+		advance();
+
+		int c = index - 1; // -1 so that the next parse loop will advance to the token after the '}'
+
+
+		if (!setCaret(f->getStart())) DEBUG("COULD NOT SET CARET.");
+		VContainer v(nullptr, depth, Base::Decl::UNKNWN);
+		while (index < f->getEnd()) {
+
+			if (parse(&v)) {
+				//if (return_parent != nullptr)*return_parent = true;
+
+				decDepth();
+				setCaret(c);
+
+
+				return v;
+			}
+		}
+		decDepth();
+		setCaret(c);
+
+		scope.popStack();
+		return VContainer::null();
+
+
+	}
 	marine::VContainer parseObjectFunctionReference(ValueHolder* v) {
 		auto x = v->getObjSelf();
 		if (x->getName() == "NULL") throw marine::errors::SyntaxError("operator '.' cannot be performed on a non object like variable. this var type can only hold its value. all types will be converted to object upon release.");
@@ -1534,14 +1724,6 @@ namespace marine {
 
 
 		advance();
-		//weird memory behavour?
-		/*const auto* func = x->getFunction("add");
-		DEBUG((func == nullptr));
-		DEBUG(func->name);
-		for (const auto& y : func->paramTypes) {
-			DEBUG("y: "); DEBUG(Base::declStr(y));
-		}
-		*/
 		if (x->hasFunction(cur().value)) {
 			int br = 0;
 			int nbr_i = 0;
@@ -1609,6 +1791,7 @@ namespace marine {
 		auto* x = instance.getVariable(cur().value);
 		return x == nullptr ? nullptr : (ClassStructure::ClassVariable*)x;
 	}
+
 	marine::ObjectVariable* parseObjectVariableReference(ValueHolder* v) {
 		//if (ObjectHandler::isPrecompiledObject(v)) {
 		//}
@@ -1772,7 +1955,6 @@ namespace marine {
 
 	}
 	VContainer parseVariableUsage() {
-
 		Variable* v = &getVariable(cur());
 		if (v->getName() == "NULL") throw marine::errors::SyntaxError("unknown token.");
 		if (isOp(getNext())) {
@@ -1830,14 +2012,15 @@ namespace marine {
 			if (!v->isDynamicObj()) {
 				advance();
 				//check if is function first
-				DEBUG("CUR:"); DEBUG(cur().value);
+				//std::cout <<("CUR:") << (cur().value);
 				if (v->getDecl() != Base::Decl::STATIC_OBJECT) {
 					if (isFuncCall(index + 1)) {
 						VContainer x = parseObjectFunctionReference(v);
 						if (Base::is(getNext(), ".")) {
 
 							advance();
-							return parseObjectFunctionReference(&x);
+							VContainer v = parseObjectFunctionReference(&x);
+							DEBUG("CUR RECR OBJECT FUNC REFERENCE: " + cur().value);
 						}
 						return x;
 					}
@@ -1856,11 +2039,12 @@ namespace marine {
 				else {
 						// [TODO_]
 					if (isFuncCall(index + 1)) {
-						if (Base::is(getNext(), ".")) {
+						advance();
+						ClassInstance& instance = v->castRef<ClassInstance>();
+						VContainer v = parseClassFunctionReference(&instance);
+						//check for recursions of object func
 
-							advance();
-							// [TODO_]
-						}
+						return v;
 					}
 					else {
 						// is variable
@@ -1872,7 +2056,6 @@ namespace marine {
 							// [TODO_] SUPPORT FOR RECURSIVE CLASS / OBJECT NEEDS TO BE HERE.
 						}
 						VContainer& vc = *x->defaultedValue.get();
-						DEBUG("!INT:");DEBUG(Base::declStr(vc.getDecl()));
 						return *x->defaultedValue.get();
 					}
 					
@@ -2205,9 +2388,6 @@ namespace marine {
 				VContainer vc(x.getValue(), x.getDepth(), x.getDecl());
 				ClassStructure::ClassVariable var(x.getName(), (ClassStructure::MEMBERPROTECTION)curProtType, x.getDecl(), std::make_shared<VContainer>(vc));
 				_obj.addNewVariable(var);
-				DEBUG("NAME:");
-				DEBUG(x.getName());
-				DEBUG(cur().value);
 			}
 			else if (isFuncDecl()) {
 				Function func = skipFuncDecl(false);
@@ -2217,9 +2397,6 @@ namespace marine {
 		}
 		DEBUG(cur().value);
 		if (!Base::is(cur(), "}")) throw marine::errors::SyntaxError("expected ending '}' after class declaration.");
-		DEBUG("VARS: ");
-		DEBUG(_obj.getStructure()->members.size());
-		auto* structure = _obj.getStructure();
 		ClassHandler::addClass(_obj);
 		DEBUG("end:" + cur().value);
 	}
@@ -2238,6 +2415,9 @@ namespace marine {
 				return true;
 			}
 
+		}
+		else if (Base::is(cur(), "use") || Base::is(cur(), "from")) {
+			_import();
 		}
 		else if (Base::is(cur(), "class")) {
 			parseClassObject();

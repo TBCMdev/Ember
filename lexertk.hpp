@@ -383,7 +383,9 @@ namespace lexertk
     class generator
     {
     public:
-
+        static void merge(generator& x, generator& y) {
+            x.token_list_.insert(x.token_list_.begin(), y.token_list_.begin(), y.token_list_.end());
+        }
         typedef token token_t;
         typedef std::deque<token_t> token_list_t;
         typedef std::deque<token_t>::iterator token_list_itr_t;
@@ -853,9 +855,10 @@ namespace lexertk
             return;
         }
 
+       
+        token_list_t token_list_;
     private:
 
-        token_list_t token_list_;
         token_list_itr_t token_itr_;
         token_list_itr_t store_token_itr_;
         token_t eof_token_;
