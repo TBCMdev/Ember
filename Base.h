@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 #include "helpers.h"
-constexpr bool MARINE__DEBUG = true;
+constexpr bool MARINE__DEBUG = false;
 
 
 class Base {

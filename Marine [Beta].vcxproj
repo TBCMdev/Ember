@@ -149,7 +149,9 @@
     <ClInclude Include="Class.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="Importer.h" />
+    <ClInclude Include="inb-cpp\inbuilt_std_injected.h" />
     <ClInclude Include="inb.h" />
+    <ClInclude Include="Injector.h" />
     <ClInclude Include="Iterable.h" />
     <ClInclude Include="lexertk.hpp" />
     <ClInclude Include="libs\Game\Color.h" />
@@ -254,12 +256,18 @@
     <ClInclude Include="libs\Game\Game.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="MError.h" />
+    <ClInclude Include="Module.h" />
+    <ClInclude Include="ObjectHandler.h" />
     <ClInclude Include="Operator.h" />
     <ClInclude Include="Parser.h" />
+    <ClInclude Include="Register.h" />
     <ClInclude Include="Scope.h" />
     <ClInclude Include="Serialized.h" />
+    <ClInclude Include="String.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="ValueHolder.h" />
+    <ClInclude Include="Variable.h" />
+    <ClInclude Include="VContainer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\Game\dependencies\SFML-2.5.1\include\SFML\Audio\SoundFileFactory.inl" />

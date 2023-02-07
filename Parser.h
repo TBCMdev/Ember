@@ -15,7 +15,8 @@
 #include "Class.h"
 #include "Scope.h"
 #include "Importer.h"
-
+#include "Module.h"
+#include "Register.h"
 
 #define DEBUG(x) if (MARINE__DEBUG) std::cout << "[debug] " << x << "\n"
 
@@ -26,6 +27,7 @@ using namespace marine::out;
 namespace marine {
 	class Parser {
 	protected:
+
 
 		std::string m_relative_running_dir;
 
@@ -38,18 +40,27 @@ namespace marine {
 		int start_range = -1;
 		int old_end_range = -1;
 		int end_range;
+		void __reload() {
+			end_range = gen.size();
+			//more reloads...
+		}
 	public:
 		auto& getVariables() { return scope.getVariables(); }
 		auto& getFunctions() { return scope.getFunctions(); }
 		Parser(lexertk::generator& generator) : gen(generator) {
 			
 			end_range = generator.size();
+			Importer::initialize();
 		}
-		Parser(lexertk::generator& generator, unsigned int s_range, unsigned int e_range) : gen(generator), start_range(s_range), end_range(e_range), index(start_range) {}
+		Parser(lexertk::generator& generator, unsigned int s_range, unsigned int e_range) : gen(generator), start_range(s_range), end_range(e_range), index(start_range) {
+			Importer::initialize();
+		}
 #pragma region decl
 		void setRelativeRunningDirectory(std::string& x) {
 			m_relative_running_dir = x;
 		}
+
+
 		void incDepth() { depth++; }
 		void decDepth() {
 			depth--;
@@ -63,11 +74,33 @@ namespace marine {
 				else ++iter;
 			}
 		}
+		bool module_isDecl() {
+			int ind_cpy = index;
+			Module* x = scope.findModule(gen[ind_cpy].value);
+
+			if (x == nullptr || ind_cpy + 2 >= gen.size()) return false;
+			bool more_than_one = Base::is(gen[ind_cpy + 3], ":"); // checks if we are accessing a sub module.
+			ind_cpy ++;
+			if (!more_than_one || !x->hasChildModule(gen[ind_cpy + 1].value)) return true;
+			do {
+				lexertk::token& y = gen[ind_cpy + 1];
+				x = x->getChildModule(y.value);
+				ind_cpy += 2;
+
+			} while (Base::is(gen[ind_cpy + 1], ":"));
+
+			if (x == nullptr && more_than_one) throw marine::errors::SyntaxError("Module does not exist.");
+
+			return (x != nullptr);
+
+		}
 		bool isDecl() {
 			//std::cout << "is decl? " << cur().value << (Base::declareParse(cur()) != Base::Decl::UNKNWN || ClassHandler::hasClass(cur().value)) << '\n';
 			return Base::declareParse(cur()) != Base::Decl::UNKNWN || ClassHandler::hasClass(cur().value);
 		}
-
+		Scope* getScope() {
+			return &scope;
+		}
 		void _import() {
 			int import_type = 0;
 			bool hasFrom = false;
@@ -94,10 +127,12 @@ namespace marine {
 					from.push_back(&advance().value);
 					//std::string& back = *from.back();
 					//if (!validateImport(back)) throw marine::errors::SyntaxError("imported names cannot contain characters other than letters numbers, or an underscore.");
-					if (!Base::is(getNext(), ".")) break;
+					if (!Base::is(getNext(), ":")) break;
 					advance();
 				}
-				if (!Importer::importExists(source, m_relative_running_dir)) throw marine::errors::SyntaxError("Import does not exist.");
+				if (!Importer::importExists(source, m_relative_running_dir)) {
+					throw marine::errors::SyntaxError("Import does not exist.");
+				}
 				//start import.
 				std::string s = Importer::readImport(source);
 
@@ -124,43 +159,120 @@ namespace marine {
 				//vecF.insert(vecF.end(), vecFC.begin(), vecFC.end());
 			}
 			else {
-				// use <name> (.?...) (from <source (.?...)>?)
+
+				//DONE
+
+				// use <name> (:?...) (from <source (:?...)>?)
 				std::vector<std::string*> _using;
 				while (canAdvance()) {
 					_using.push_back(&advance().value);
 					//std::string& back = *from.back();
 					//if (!validateImport(back)) throw marine::errors::SyntaxError("imported names cannot contain characters other than letters numbers, or an underscore.");
-					if (!Base::is(getNext(), ".")) break;
+					if (!Base::is(getNext(), ":")) break;
 					advance();
 				}
 				if (Base::is(getNext(), "from")) {
 					std::string source = String::trim(advance(2).value);
-
 					if (!Importer::importExists(source, m_relative_running_dir)) throw marine::errors::SyntaxError("Import does not exist.");
 					//start import.
 					std::string s = Importer::readImport(source);
 
 					lexertk::generator g = Importer::parseImport(s);
+
+
+
+
+					
+
+					// Save what we want to append to our old generator:
+					if (_using.size() == 1 && *_using.back() == "*") {
+
+						int sub_index = 0;
+						int end = g.size();
+
+						lexertk::generator old = gen;
+						gen = g; // set the whole gen to be the new file we just parsed.
+
+						__reload(); // reload generator to match settings of our new generator.
+						//start reparsing from index 0.
+						while (sub_index < end) {
+							parse();
+							sub_index++;
+						}
+						// merge old first as that technically is our main generator.
+						lexertk::generator::merge(old, gen);
+					}
+					else {
+						// The import is a module
+
+						// create a new parse instance.
+						// the reason we want to to this is because we want to parse, and then
+						// figure out what we want to keep, the Parser class does that for us.
+						Parser p(g);
+						while (p.canAdvance()) {
+							p.parse();
+						}
+						// this holds our modules.
+						Scope* module_holder = p.getScope();
+
+						auto& m = module_holder->getModules();
+
+						Module* cur = module_holder->findModule(*_using.front());
+						for (int i = 1; i < _using.size(); i++) {
+							if (cur == nullptr) throw marine::errors::SyntaxError("Module does not exist in external file.");
+							cur = cur->getChildModule((*_using[i]));
+
+							
+						}
+						// we must copy the pointer!
+						// here we add the module, as even if we are using everything inside it,
+						// we should still allow the programmer to access the module by its name too.
+						std::shared_ptr<Module> cur_shared = std::make_shared<Module>(*cur);
+						scope.newModule(cur_shared);
+
+						// We then must add all of our variables and functions.
+						scope.mergeModule(cur_shared.get());
+
+						std::cout << "added module: " << cur_shared->getName() << "\n";
+					}
+
+
+
+
+					setCaret(index);
 				}
 				else {
 					// default use <name> 
+					//if(scope.has)
 					std::string source = String::trim(*_using.back());
-					if (!Importer::importExists(source, m_relative_running_dir)) throw marine::errors::SyntaxError("Import does not exist.");
+
+					bool inbuilt_module = false;
+
+					if (!Importer::importExists(source, m_relative_running_dir, &inbuilt_module)) throw marine::errors::SyntaxError("Import does not exist.");
 					//start import.
-					std::string s = Importer::readImport(source);
+					bool need = false;
+					std::string s = Importer::readImport(source, inbuilt_module, &need);
+
+					if (need) {
+
+
+						marine::inb::inject_inb_std();
+
+						return;
+					}
 
 					lexertk::generator g = Importer::parseImport(s);
 
 					//concat the file on top.
 					lexertk::generator::merge(gen, g);
-					int recr_index = index;
+					int recr_index = index + g.size();
 
 					setCaret(0);
 
+					__reload();
 					//start reparsing from the indexes
 					int end = g.size();
 					while (index < end) {
-						std::cout << "parsing: " << cur().value << '\n';
 						parse();
 					}
 					setCaret(recr_index);
@@ -170,7 +282,7 @@ namespace marine {
 
 
 		bool CheckINBLibraryDecl() {
-			if (!inb::matchINBLibraryName(cur().value)) return false;
+			//if (!inb::matchINBLibraryName(cur().value)) return false;
 			if (Base::is(getNext(), ".")) {
 				advance(2);
 				return CheckINBLibraryDecl();
@@ -351,9 +463,7 @@ namespace marine {
 				if (br)  break;
 				advance();
 			}
-			
 			return operationStack.back();
-
 
 		}
 		template<typename Type>
@@ -1324,7 +1434,9 @@ namespace marine {
 					//std::cout << "is null";
 					c = &inb::getNoIncludeFunctionByName(name.value, PredictedParameterTypes);
 				}
-				if (c->name == "NULL") throw marine::errors::SyntaxError("Function does not exist.");
+				if (c->name == "NULL") {
+					throw marine::errors::SyntaxError("Function does not exist.");
+				}
 				//check parameters
  				advance();
 				while (canAdvance()) {
@@ -1411,7 +1523,6 @@ namespace marine {
 			}
 	}
 	Function skipFuncDecl(bool push = true) {
-		DEBUG("starting skip:" + cur().value);
 		lexertk::token start;
 		lexertk::token end;
 
@@ -1464,7 +1575,7 @@ namespace marine {
 
 		decDepth();
 		Function func(name, start, end, start_index, end_index, parameters);
-
+		//std::cout << "adding function to: " << scope.getCurrentModule()->getName() << '\n';
 		if (push) scope.addFunction(func);
 		return func;
 	}
@@ -2400,10 +2511,97 @@ namespace marine {
 		ClassHandler::addClass(_obj);
 		DEBUG("end:" + cur().value);
 	}
+	void parseModule() {
+		lexertk::token& name = advance();
+
+		//check string for invalid symbols
+		Module* current = scope.getCurrentModule().get();
+		std::shared_ptr<Module> current_copy = nullptr;
+		if (current == nullptr) {
+			//first module
+
+			std::shared_ptr<Module> ptr = std::make_shared<Module>(name.value);
+			scope.newModule(ptr);
+			scope.setCurrentModule(ptr);
+		}
+		else {
+			//std::cout << "in module " << current->getName() << ", making child:" << name.value << "\n";
+			// we are in a module currently
+			std::shared_ptr<Module> ptr = std::make_shared<Module>(name.value);
+			current->addChildModule(ptr);
+
+			// we copy the instance, dont worry! im pretty sure the code still only keeps 1 pointer at once.
+			current_copy = std::make_shared<Module>(*current);
+			scope.setCurrentModule(ptr);
+
+		}
+		if (!Base::is(advance(), "{")) throw marine::errors::SyntaxError("expected opening '{' brace after module declaration.");
+		int brc = 1;
+		while (brc > 0 && canAdvance()) {
+			parse();
+			if (Base::is(cur(), "}")) brc--;
+			else if (Base::is(cur(), "{")) brc++;
+		}
+		if (brc != 0) throw marine::errors::SyntaxError("could not find closing module brace.");
+		
+		scope.setCurrentModule(current_copy);
+
+		//std::cout << "current module:" << scope.getCurrentModule()->getName() << "\n";
+	}
+	ValueHolder parseModuleUsage() {
+		std::vector<std::string*> traverser;
+
+		traverser.push_back(&cur().value);
+		while (canAdvance() && Base::is(getNext(), ":")) {
+			traverser.push_back(&advance(2).value);
+		}
+		Module* current = scope.getCurrentModule().get();
+
+		if (current != nullptr) {
+			current = current->getChildModule(*traverser[0]);
+		}
+
+
+		// TEMP -- we find the module by looking in the parent dir of modules (ie: the global scope)
+		if (current == nullptr) current = scope.getModules()[*traverser[0]].get();
+
+		if (current == nullptr) throw marine::errors::SyntaxError("Module not found.");
+		if (traverser.size() > 1) {
+			traverser.erase(traverser.begin());
+			for (std::string*& x : traverser) {
+				Module* to = current->getChildModule(*x);
+				if (to == nullptr) break;
+				current = to;
+			}
+
+		}
+		// ADVANCE CALL WAS HERE, removed to allow sub modules to function.
+		return scope.enterModuleTemporarily<ValueHolder>(current, [&]() -> ValueHolder {
+
+			if (isVariable()) {
+				if (!isVariableObjectUsage() && !Base::is(getNext(), "[")) {
+					return getVariable(cur());
+				}
+				else {
+					return parseVariableUsage();
+				}
+			}
+			else if (isFuncCall()) {
+				return parseFuncCall<VContainer>();
+			}
+
+			});
+
+
+	}
 #pragma endregion
 	bool parse(ValueHolder* v = nullptr) {
 		if (isDecl()) {
 			parseDecl();
+		}
+		else if (module_isDecl()) {
+			//we are doing something inside a module.
+			parseModuleUsage();
 		}
 		else if (isReturnStatement()) {
 			std::any x;
@@ -2421,6 +2619,9 @@ namespace marine {
 		}
 		else if (Base::is(cur(), "class")) {
 			parseClassObject();
+		}
+		else if (Base::is(cur(), "module")) {
+			parseModule();
 		}
 		else if (isForStatement()) {
 			parseForStatement();
@@ -2462,7 +2663,6 @@ namespace marine {
 		}
 	}
 	lexertk::token& cur() {
-		current = gen[index];
 		return gen[index];
 	}
 	lexertk::token& advance() {

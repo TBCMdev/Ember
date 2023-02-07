@@ -1,14 +1,30 @@
 #pragma once
 #include <vector>
+#include <unordered_map>
+#include <optional>
+#include <functional>
 #include "Variable.h"
 #include "inb.h"
 #include "Class.h"
+#include "Module.h"
 
 namespace marine {
+	template<typename Key, typename Val>
+	using SmartMap = std::unordered_map<Key, std::shared_ptr<Val>>;
+
 	class Scope {
+		
+		
+		
+		//std::vector<std::shared_ptr<marine::Module>> modules;
+		SmartMap<std::string, Module> modules;
+
 		std::vector<std::vector<std::shared_ptr<ValueHolder>>> var_stack;
 		std::vector<std::vector<std::shared_ptr<Function>>> func_stack;
 
+		std::shared_ptr<marine::Module> current_module;
+
+		//INDICATES THE DEFAULT SCOPE. ALL MODULES STORED ARE CUSTOM.
 		std::vector<std::shared_ptr<ValueHolder>> core_variables;
 		std::vector<std::shared_ptr<Function>> core_functions;
 	public:
@@ -32,13 +48,64 @@ namespace marine {
 			}
 		}
 		Scope(){}
+		bool moduleExists(std::vector<std::string*> x) {
+			for (auto& y : x) {
+
+			}
+		}
+		auto& getCurrentModule() {
+			return current_module;
+		}
+		void setCurrentModule(std::shared_ptr<Module> m) {
+			current_module = m;
+		}
+		void setCurrentModule(Module* m) {
+			current_module.reset(m);
+		}
+		// Adds on a modules contents.
+		void mergeModule(Module* m) {
+			auto& funcs = m->getFunctions();
+			auto& vars = m->getVariables();
+			core_functions.insert(core_functions.end(), funcs.begin(), funcs.end());
+			core_variables.insert(core_variables.end(), vars.begin(), vars.end());
+
+			// also add the child modules.
+			modules.merge(m->getChildren());
+
+		}
+		template<typename Ret>
+		Ret enterModuleTemporarily(Module* toEnter, std::function<Ret()> f) {
+			if (current_module != nullptr) {
+				// TODO: POSSIBLE ERROR:
+				// FIX:
+				// current_module = std::make_shared<Module>(*ToEnter);
+				Module m = *current_module.get();
+
+				current_module = std::make_shared<Module>(*toEnter);
+				Ret x = f();
+				current_module.reset(&m);
+				return x;
+			}
+			else {
+				current_module = std::make_shared<Module>(*toEnter);
+				Ret x = f();
+				current_module.reset();
+				return x;
+			}
+		}
+		SmartMap<std::string, Module>& getModules() { return modules; }
+		Module* findModule(std::string& t) {
+			auto x = modules.find(t);
+
+			return (x == modules.end() ? nullptr : x->second.get());
+		}
 		void popStack() {
 			core_variables = var_stack.back();
 			core_functions = func_stack.back();
 			var_stack.pop_back();
 			func_stack.pop_back();
 		}
-
+		void newModule(std::shared_ptr<Module>& m) { modules.insert({ m->getName(), m}); }
 		void setLists(ClassInstance* c) {
 
 			var_stack.push_back(core_variables);
@@ -57,22 +124,43 @@ namespace marine {
 			}
 		}
 		void addFunctionParameters(std::vector<Variable>* x) {
-			for (auto& y : *x) {
-				core_variables.push_back(std::make_shared<Variable>(y));
+			if (current_module == nullptr) {
+				for (auto& y : *x) {
+					core_variables.push_back(std::make_shared<Variable>(y));
+				}
+			}
+			else {
+				auto& vars = current_module->getVariables();
+				for (auto& y : *x) {
+					vars.push_back(std::make_shared<Variable>(y));
+				}
 			}
 		}
 		std::vector<std::shared_ptr<ValueHolder>>& getVariables() {
-			return core_variables;
+			return (current_module == nullptr ? core_variables : current_module->getVariables());
 		}
 		std::vector<std::shared_ptr<Function>>& getFunctions() {
-			return core_functions;
+			return (current_module == nullptr ? core_functions : current_module->getFunctions());
 		}
 		void addFunction(Function& f) {
-			core_functions.push_back(std::make_shared<Function>(f));
+			if (current_module == nullptr) 
+			{
+				core_functions.push_back(std::make_shared<Function>(f));
+			}
+			else
+			{
+				current_module->getFunctions().push_back(std::make_shared<Function>(f));
+			}
 		}
 		void addVariable(Variable& f) {
-
-			core_variables.push_back(std::make_shared<Variable>(f));
+			if (current_module == nullptr) {
+				//we are in global default scope
+				core_variables.push_back(std::make_shared<Variable>(f));
+			}
+			else 
+			{
+				current_module->getVariables().push_back(std::make_shared<Variable>(f));
+			}
 		}
 
 	};

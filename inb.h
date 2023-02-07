@@ -9,6 +9,10 @@
 #include <variant>
 #include <tuple>
 #include "String.h"
+#include "Module.h"
+
+#include "inb-cpp/inbuilt_std_injected.h"
+
 #define VCONTAINERFUNC marine::VContainer(*)(std::vector<std::any>, std::vector<Base::Decl>*)
 
 using std::string;
@@ -16,24 +20,13 @@ using std::string;
 
 namespace marine {
 
-	std::map<const char*, std::vector<const char*>> INBTREE = {
-		{"inb", {
-			"console",
-			"network",
-			"files",
-			"game",
-	
-			}
 
-		}
-	};
 	namespace inb {
-#pragma region function_converters
-#pragma endregion
 #pragma region internal_backend
 		using Action = void* (*)(std::vector<std::any>, std::vector<Base::Decl>*);
 
 		using Function = marine::VContainer (*)(std::vector<std::any>, std::vector<Base::Decl>*);
+
 
 
 		struct IFunc {
@@ -53,6 +46,13 @@ namespace marine {
 				throw marine::errors::RuntimeError(" a callable cannot contain no callable item.");
 			}
 
+		};
+		struct mod_action : public Callable {
+			Action callable;
+			void call(std::vector<std::any> a, marine::VContainer* ignored = nullptr, std::vector<Base::Decl>* help = nullptr)
+			{
+				callable(a, help);
+			}
 		};
 		struct inb_action: public Callable {
 			Action callable;
@@ -270,14 +270,16 @@ namespace marine {
 			inb_function null{ "NULL", 0,{},  nullptr };
 			return null;
 		}
-		bool matchINBLibraryName(std::string& s) {
-			for (auto const& [key, val] : INBTREE) {
-				if (s == key) return true;
-				for (auto& x : val) {
-					if (s == x) return true;
-				}
+		void inject_inb_std() {
+			std::vector<inb_function> functions;
+			std::vector<Action> actions;
+
+			for (auto& x : __get_to_be_injected_f()) {
+				functions.push_back(inb_function{std::get<0>(x) , std::get<1>(x), std::get<2>(x), std::get<3>(x)});
+
 			}
-			return false;
+
+			__NO_INCLUDE_FUNCTIONS.insert(__NO_INCLUDE_FUNCTIONS.begin(), functions.begin(), functions.end());
 		}
 	}
 

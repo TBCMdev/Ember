@@ -147,21 +147,25 @@ inline bool _compile(string fc, bool runCompileAfter, char* relativePath)
 	marine::Parser p(gen);
 	
 	std::string y = relativePath;
+
 	size_t at = y.find_last_of("/\\");
+
 	y = y.substr(0, at);
+
 	p.setRelativeRunningDirectory(y);
 	p.advance();
+
+	MTimer x("_compile(Ember [beta].cpp)(std::string& x)");
 	while (p.canAdvance()) {
 		p.parse();
 	}
-	std::cout << "\n\n\n";
+	/*std::cout << "\n\n\n";
 	for (auto& x : p.getVariables()) {
 		std::cout << x->str() << std::endl;
-	}
+	}*/
 	return true;
 }
 int main(int argc, char* argv[]) {
-	MTimer x("_compile(std::string& x)");
 	try {
 		_compile(fileManager::readFileIntoString(argv[1]), false, argv[1]);
 	}
@@ -176,8 +180,6 @@ int main(int argc, char* argv[]) {
 
 		return EXIT_FAILURE;
 	}
-	
-	x.~MTimer();
 	
 	marine::out::stpr("\nscript finished successfully... (press any key to close this window)", marine::out::STATUS::GOOD);
 

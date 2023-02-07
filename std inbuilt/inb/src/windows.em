@@ -58,14 +58,14 @@ exported module WIND{
         method _rsubs(){
             # [TODO]
             # reload subscriptions to all events
-            for(Type t in Event.inherited()){
+            for(Type t in inherited_from<Event>()){
                 t._refresh_subs()
             }
         }
 
         class Event{
             static virtual list subscriptions = []
-            virtual method _refresh_subs(){
+            method _refresh_subs() static, virtual {
                 return false;
             }
         }
@@ -73,7 +73,7 @@ exported module WIND{
         class KeyEvent extends Event{
             static list subscriptions = []
             # [TODO]
-            method _refresh_subs(){
+            method _refresh_subs() static {
                 for(lambda x of subscriptions){
                     # 'mem(Type any)' is a function that extracts the memory address of the variable.
                     # it can be used to create key identifiers.
@@ -86,7 +86,7 @@ exported module WIND{
         class MouseEvent extends Event{
             static list subscriptions = []
             # [TODO]
-            method _refresh_subs(){
+            method _refresh_subs() static {
                 for(lambda x of subscriptions){
                     if(__events["mouse"][mem(x)] == null) __events["mouse"].add(x)
                 }

@@ -365,6 +365,30 @@
     <ClInclude Include="Importer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Variable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VContainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="String.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Module.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Register.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Injector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inb-cpp\inbuilt_std_injected.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\Game\dependencies\SFML-2.5.1\include\SFML\Audio\SoundFileFactory.inl">
