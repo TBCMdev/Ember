@@ -159,10 +159,10 @@ inline bool _compile(string fc, bool runCompileAfter, char* relativePath)
 	while (p.canAdvance()) {
 		p.parse();
 	}
-	/*std::cout << "\n\n\n";
+	std::cout << "\n\n\n";
 	for (auto& x : p.getVariables()) {
 		std::cout << x->str() << std::endl;
-	}*/
+	}
 	return true;
 }
 int main(int argc, char* argv[]) {

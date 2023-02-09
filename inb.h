@@ -279,7 +279,8 @@ namespace marine {
 
 			}
 
-			__NO_INCLUDE_FUNCTIONS.insert(__NO_INCLUDE_FUNCTIONS.begin(), functions.begin(), functions.end());
+			__NO_INCLUDE_FUNCTIONS.insert(__NO_INCLUDE_FUNCTIONS.end(), functions.begin(), functions.end());
+
 		}
 	}
 

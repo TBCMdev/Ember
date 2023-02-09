@@ -7,7 +7,7 @@ class WINDOW_HWND_OPTIONS{
 class WINDOW_HWND{
 
 [public]
-    int processID = 0
+    int processID = -1
 
     constructor(int procID) => processID(procID){
     }

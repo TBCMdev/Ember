@@ -943,7 +943,7 @@ namespace marine {
 				// maybe function call, assert data types and return variable HERE.
 				if (raw_decl != Base::Decl::STATIC_OBJECT) throw marine::errors::TypeError("Returned type from function does not match the assigned type.");
 
-				Variable v(raw);
+				Variable v(var_name, raw, {}); // the name is vital!
 				v.setDecl(raw_decl);
 				return v;
 			}
@@ -1099,7 +1099,6 @@ namespace marine {
 				}
 				case Base::Decl::STATIC_OBJECT: {
 					Variable v = parseClassInstantiation(decl_raw.value, decl_name.value);
-					
 					ret = new Variable(v);
 					ret->setDecl(Base::Decl::STATIC_OBJECT);
 					setDepth = true;
@@ -1488,7 +1487,6 @@ namespace marine {
 							}
 						}
 						else if (c->parameter_count == -1) {
-							
 							//std::cout << "parsing parameter...";
 							//unknown parameter!
 							std::any raw;
@@ -1521,6 +1519,7 @@ namespace marine {
 						}
 					}
 					catch (std::exception& ig) {
+						throw ig;
 						throw marine::errors::IndexError("function parameter either does not exist or you have exceeded the amount of parameters the function is asking for.");
 					}
 					advance();
