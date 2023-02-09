@@ -4,6 +4,7 @@
 #include "Base.h"
 #include "MError.h"
 #include "Types.h"
+#include "Class.h"
 #include "Operator.h"
 #define DEBUG(x) if(MARINE__DEBUG) std::cout << "[debug] " << x << std::endl
 
@@ -508,6 +509,8 @@ namespace marine {
 					return internal_value->cast<bool>();
 				case Base::Decl::LIST:
 					return internal_value->cast<ArrayList>();
+				case Base::Decl::STATIC_OBJECT:
+					return internal_value->cast<ClassInstance>();
 				default:
 					throw marine::errors::RuntimeError("this type is currently not supported.");
 				}
@@ -542,6 +545,8 @@ namespace marine {
 					return internal_value->cast<bool>();
 				case Base::Decl::LIST:
 					return internal_value->cast<ArrayList>();
+				case Base::Decl::STATIC_OBJECT:
+					return internal_value->cast<ClassInstance>();
 				default:
 					throw marine::errors::RuntimeError("this type is currently not supported.");
 				}

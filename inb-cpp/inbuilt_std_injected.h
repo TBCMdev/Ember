@@ -15,7 +15,7 @@ namespace marine {
 
 		auto [s] = cast<String>(a);
 
-		const wchar_t CLASS_NAME[] = L"Sample Window Class";
+		/*const wchar_t CLASS_NAME[] = L"Sample Window Class";
 		const wchar_t* name = (wchar_t*)s.get().c_str();
 		WNDCLASS wc = {};
 
@@ -47,7 +47,7 @@ namespace marine {
 			TranslateMessage(&m);
 			DispatchMessage(&m);
 		}
-
+		*/
 		return VContainer(1, -1, Base::Decl::INT);
 	}
 

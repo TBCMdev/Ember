@@ -574,7 +574,6 @@ namespace marine {
 					if (negate_next_node) negate_next_node = false;
 
 					if (!isOp(getNext())) {
-						//std::cout << ("is not op1:" + getNext().value);
 						br = true;
 					}
 
@@ -940,6 +939,13 @@ namespace marine {
 				std::any raw;
 				Base::Decl raw_decl;
 				parseExt<std::any>(Base::Decl::STATIC_OBJECT, &raw, &raw_decl);
+
+				// maybe function call, assert data types and return variable HERE.
+				if (raw_decl != Base::Decl::STATIC_OBJECT) throw marine::errors::TypeError("Returned type from function does not match the assigned type.");
+
+				Variable v(raw);
+				v.setDecl(raw_decl);
+				return v;
 			}
 			
 		}
@@ -1422,6 +1428,12 @@ namespace marine {
 			else {
 				//inbuilt function
 				//check for library decl ex inb.stuff.function()
+				
+				
+				/*if (getVariable(cur()).getDecl() == Base::Decl::STATIC_OBJECT) {
+					return parseVariableUsage();
+				}*/
+
 				std::vector<std::any> parameters;
 				//call
 

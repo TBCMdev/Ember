@@ -5,19 +5,23 @@ use inb
 class WINDOW_HWND_OPTIONS{
 }
 class WINDOW_HWND{
-    int processID
-    constructor(int procID){
-        processID = procID
+
+[public]
+    int processID = 0
+
+    constructor(int procID) => processID(procID){
     }
     method EventOccured(string event){
         # return inb.windows[]
         return 0
     }
+    method pollFpsRate(int max){
+        return max / 1
+    }
 }
 
 method createWindow(string title){
-    int id = inb.window(title, 0)
-    WINDOW_HWND hwnd = new WINDOW_HWND(id)
+    WINDOW_HWND hwnd = new WINDOW_HWND(0)
     return hwnd
 }
 
