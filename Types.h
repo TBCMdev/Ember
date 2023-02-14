@@ -125,8 +125,32 @@ namespace marine {
 			}
 			return s.str();
 		}
+		virtual ~Function() = default;
 	};
+	class Lambda;
 
+
+	std::function<VContainer(*)(Lambda*, std::vector<VContainer>&)> _LAMBDA_ON_CALL = nullptr;
+
+	class Lambda : public Function {
+	public:
+		static VContainer callFromCPP(Lambda* l, std::vector<VContainer> args) {
+			if (_LAMBDA_ON_CALL != nullptr)
+				return _LAMBDA_ON_CALL(l, args);
+
+			return VContainer::null();
+		}
+		static void initialize(std::function<VContainer(Lambda*, std::vector<VContainer>&)> l) {
+			_LAMBDA_ON_CALL = l;
+		}
+		Lambda(lexertk::token& start, lexertk::token _end, int start_, int end_, std::vector<Variable> _p) : Function("", start, _end, start_, end_, _p) {
+
+		}
+		~Lambda() = default;
+		/*void call(std::vector<VContainer> values) {
+			on_call(this, values);
+		}*/
+	};
 
 
 	struct EXPRDATA {

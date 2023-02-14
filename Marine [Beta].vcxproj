@@ -79,6 +79,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb-cpp\SDL2-2.26.3\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb-cpp\SDL2-2.26.3\lib\x64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -123,6 +125,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -149,6 +152,7 @@
     <ClInclude Include="Class.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="Importer.h" />
+    <ClInclude Include="inb-cpp\centurion.hpp" />
     <ClInclude Include="inb-cpp\inbuilt_std_injected.h" />
     <ClInclude Include="inb.h" />
     <ClInclude Include="Injector.h" />

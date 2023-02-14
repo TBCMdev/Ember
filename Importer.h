@@ -9,9 +9,15 @@
 #define _EMBER_INB_INCLUDE_DIR "./include_em"
 
 std::unordered_map<std::string, std::string> _EMBER_INB_INCLUDES;
+std::vector<std::string> imported;
+bool _INB_INJECTED = false;
 namespace marine {
 	class Importer {
+	private:
 	public:
+		static bool hasImported(const std::string& source) {
+			return (std::count(imported.begin(), imported.end(), source));
+		}
 		static bool initialize() {
 			for (const auto& x : std::filesystem::directory_iterator(_EMBER_INB_INCLUDE_DIR)) {
 				auto y = x.path();
@@ -22,7 +28,6 @@ namespace marine {
 		static bool importExists(std::string& x,std::string& rel, bool* ifmod = nullptr) {
 			struct stat buffer;
 			//add functionality for modules
-			std::cout << x;
 			if (_EMBER_INB_INCLUDES.find(x) != _EMBER_INB_INCLUDES.end() || x == "inb") {
 				if (ifmod != nullptr) *ifmod = true;
 				return true;
@@ -36,12 +41,16 @@ namespace marine {
 			try
 			{
 				if (path == "inb") {
-					if (__needs_inject__ != nullptr) *__needs_inject__ = true;
+					if (__needs_inject__ != nullptr && !_INB_INJECTED) *__needs_inject__ = true;
+					_INB_INJECTED = true;
 					return "";
 				}
 
 				path = inb ? _EMBER_INB_INCLUDES.find(path)->second : path;
 
+				if (hasImported(path)) {
+					return "";
+				}
 
 				std::ifstream t(path);
 				if (t)
@@ -51,7 +60,7 @@ namespace marine {
 					string str = buffer.str();
 
 					// if (debug) cout << "returning:" + ReplaceAll(str,"\n","\\n") << endl;
-
+					imported.push_back(path);
 					return str;
 				}
 

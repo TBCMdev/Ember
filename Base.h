@@ -23,7 +23,9 @@ public:
 		STATIC_OBJECT,
 		CUSTOM,
 		RUNTIME_DECIDED,
-		UNKNWN
+		UNKNWN,
+		LAMBDA,
+		NULLIFIED
 	};
 	enum class DeclConfig {
 		FIXED,
@@ -67,6 +69,8 @@ public:
 			return "any_type";
 		case Decl::STATIC_OBJECT:
 			return "Class";
+		case Decl::LAMBDA:
+			return "lambda";
 		default:
 			return "unknown";
 		}
@@ -85,6 +89,8 @@ public:
 		if (t.value == "list") return Decl::LIST;
 		if (t.value == "obj") return Decl::DYNAMIC_OBJECT;
 		if (t.value == "any") return Decl::RUNTIME_DECIDED;
+		if (t.value == "null") return Decl::NULLIFIED;
+		if (t.value == "lambda") return Decl::LAMBDA;
 		return Decl::UNKNWN;
 	}
 	static bool is(lexertk::token& t, const char* x) {

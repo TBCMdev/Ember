@@ -33,6 +33,7 @@ namespace marine {
 		}
 		VContainer(std::any a, int dep, Base::Decl decl, std::vector<Base::DeclConfig> d = {}): ValueHolder(a) { configs = d; __depth = dep; this->decl = decl; }
 		VContainer() : ValueHolder(nullptr) { __depth = -1; }
+		~VContainer() = default;
 		template <typename T>
 		T cast() {
 			return std::any_cast<T>(_value);

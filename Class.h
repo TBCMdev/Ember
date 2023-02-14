@@ -21,8 +21,8 @@ namespace marine {
 		};
 		struct ClassVariable : public ClassMember {
 			Base::Decl decl;
-			std::shared_ptr<marine::VContainer> defaultedValue = nullptr;
-			ClassVariable(std::string n, MEMBERPROTECTION p, Base::Decl d, std::shared_ptr<marine::VContainer> def = nullptr)
+			std::shared_ptr<marine::Variable> defaultedValue = nullptr;
+			ClassVariable(std::string n, MEMBERPROTECTION p, Base::Decl d, std::shared_ptr<marine::Variable> def = nullptr)
 				: ClassMember(n,p), decl(d), defaultedValue(def) {
 			
 				if (defaultedValue != nullptr) defaultedValue->setName(n);

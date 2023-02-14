@@ -22,7 +22,7 @@ protected:
 	std::chrono::duration<float> dur;
 	const char* name;
 public:
-	MTimer(const char* func_name) : name(func_name){start = std::chrono::high_resolution_clock::now();}
+	MTimer(const char* func_name) : name(func_name) { start = std::chrono::high_resolution_clock::now(); }
 	~MTimer() {
 
 		end = std::chrono::high_resolution_clock::now();
@@ -141,11 +141,11 @@ private:
 
 };
 inline bool _compile(string fc, bool runCompileAfter, char* relativePath)
-{	
+{
 
 	lexertk::generator gen(fileManager::compile(fc, false));
 	marine::Parser p(gen);
-	
+
 	std::string y = relativePath;
 
 	size_t at = y.find_last_of("/\\");
@@ -180,7 +180,7 @@ int main(int argc, char* argv[]) {
 
 		return EXIT_FAILURE;
 	}
-	
+
 	marine::out::stpr("\nscript finished successfully... (press any key to close this window)", marine::out::STATUS::GOOD);
 
 

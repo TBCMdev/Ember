@@ -56,14 +56,14 @@ namespace marine {
 		return false;
 	}
 	static bool isFloat(lexertk::token& t) {
-		bool dec = false;
-		for (char c : t.value) {
-			if (std::string("0123456789").find(c) == std::string::npos) return false;
-			if (!dec && c == '.') dec = true;
-			else if (dec) return false;
+		//BAD PRACTICE!! [TODO]
+		try {
+			std::stof(t.value);
+			return true;
 		}
-		if (!dec) return false;
-		return true;
+		catch (...) {
+			return false;
+		}
 	}
 	static bool isString(lexertk::token& s) {
 		if ((s.value[0] != '"' && s.value[0] != '\'') || (s.value.back() != '"' && s.value.back() != '\'')) return false;

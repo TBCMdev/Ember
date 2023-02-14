@@ -1,27 +1,26 @@
 use inb
-# will be injected in debug
 
 
-class WINDOW_HWND_OPTIONS{
-}
-class WINDOW_HWND{
+class Window{
 
 [public]
-    int processID = -1
+    string title = ""
+    constructor(string t) => title(t){
+    }
+    method open(){
+        # opens the window on another thread.
+        initCenturionExternWindow(title)
+        
 
-    constructor(int procID) => processID(procID){
+        while(1 == 1){}
     }
-    method EventOccured(string event){
-        # return inb.windows[]
-        return 0
-    }
-    method pollFpsRate(int max){
-        return max / 1
+    method onMouseButtonDown(int button, lambda func){
+        centextMEventAdd(0, button, func)
     }
 }
 
-method createWindow(string title){
-    WINDOW_HWND hwnd = new WINDOW_HWND(0)
+method createWindow(string windowTitle){
+    Window hwnd = new Window(windowTitle)
     return hwnd
 }
 

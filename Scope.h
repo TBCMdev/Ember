@@ -25,6 +25,7 @@ namespace marine {
 		std::shared_ptr<marine::Module> current_module;
 
 		//INDICATES THE DEFAULT SCOPE. ALL MODULES STORED ARE CUSTOM.
+
 		std::vector<std::shared_ptr<ValueHolder>> core_variables;
 		std::vector<std::shared_ptr<Function>> core_functions;
 	public:

@@ -2,12 +2,17 @@
 #include "../VContainer.h"
 #include "../String.h"
 #include "../helpers.h"
+#include "../protector.h"
 
-#define NK_IMPLEMENTATION
-#include "nuklear-master/nuklear.h"
+#define CENTURION_NO_SDL_TTF
+#define CENTURION_NO_SDL_MIXER
+#include "centurion.hpp"
 
 #include <windows.h>
 #include <thread>
+
+
+
 namespace marine {
 
 	// using Action = void* (*)(std::vector<std::any>, std::vector<Base::Decl>*);
@@ -16,69 +21,146 @@ namespace marine {
 #pragma region _VISUALS_WINDOW
 
 
-	bool _init_nk_window;
-	class _NK_WINDOW_HWND {
+	bool _init_ce_window;
+	class _CE_WINDOW_HWND {
 
 	public:
-		struct _NK_WINDOW_CFG {
-			std::string title;
-			signed int FPS;
+		struct _CE_WINDOW_CFG {
+			std::string title = "Ember Window";
+
+		};
+		struct _CE_INPUT_HWND {
+			enum MOUSEEVENT
+			{
+				M1,M2,M3DOWN, M3UP, M3CLICK, MOUSE_MOVE, ANNONAMOUS
+			};
+			enum KEYBOARDEVENT
+			{
+				KEY, KEYDOWN, KEYUP,
+				
+			};
+			template<typename _T>
+			VContainer wrapEvent(_T& m) {
+				return VContainer((int)m, -1, Base::Decl::INT);
+			}
+			std::map<KEYBOARDEVENT, Lambda> e_kb;
+			std::map<MOUSEEVENT, Lambda> e_mo;
+			
+			void mouseMove(float x_coord, float y_coord) {
+				auto _end = e_mo.end();
+				auto x = std::find(e_mo.begin(), e_mo.end(), MOUSEEVENT::MOUSE_MOVE);
+
+				if (x != _end)
+					Lambda::callFromCPP(&x->second, { VContainer(x_coord, -1, Base::Decl::FLOAT), VContainer(y_coord, -1, Base::Decl::FLOAT) });
+			}
+			void _evfirem(MOUSEEVENT e) {
+				auto _end = e_mo.end();
+				auto x = std::find(e_mo.begin(), e_mo.end(), e);
+
+				if (x != _end)
+					Lambda::callFromCPP(&x->second, { wrapEvent(e) });
+			}
+			void _evfirek(std::string k_chr, KEYBOARDEVENT k) {
+				auto _end = e_kb.end();
+				auto x = std::find(e_kb.begin(), e_kb.end(), k);
+
+				if (x != _end)
+					Lambda::callFromCPP(&x->second, {
+					VContainer(String(k_chr, false), -1, Base::Decl::STRING), wrapEvent(k)
+						});
+			}
+#pragma region connector
+			VContainer _push_mevent(std::vector<std::any> a, std::vector<Base::Decl>* x) {
+
+			}
+			VContainer _push_kevent(std::vector<std::any> a, std::vector<Base::Decl>* x) {
+				return VContainer::null();
+			}
+#pragma endregion
 		};
 
 	protected:
-		_NK_WINDOW_CFG config;
+		_CE_WINDOW_CFG config;
+		_CE_INPUT_HWND input;
 		bool __flag_open = true;
-		struct nk_context _nk_context;
+
+
+
 	public:
-		_NK_WINDOW_HWND(std::string& title) {
+		_CE_WINDOW_HWND(std::string& title) {
 			config.title = title;
-
-			nk_user_font font{};
-
-			int MAX_MEMORY = 1024 * 1024 * 1000; // 1 gb
-			nk_init_fixed(&_nk_context, calloc(1, MAX_MEMORY), MAX_MEMORY, &font);
 		};
 		void close() { __flag_open = false; }
 		bool wantsopen() { return __flag_open; }
 		void _mainloop_() {
+			const cen::sdl sdl;
 			// main loop here.
-			if (nk_begin(&_nk_context, "Show", nk_rect(50, 50, 220, 220),
-				NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_CLOSABLE)) {
-				/* fixed widget pixel width */
-				nk_layout_row_static(&_nk_context, 30, 80, 1);
 
-				/* fixed widget window ratio width */
-				nk_layout_row_dynamic(&_nk_context, 30, 2);
-				/* custom widget pixel width */
-				nk_layout_row_begin(&_nk_context, NK_STATIC, 30, 2);
-				{
+			cen::window hwnd;
+			cen::renderer renderer = hwnd.make_renderer();
+
+
+			hwnd.show();
+
+			hwnd.set_title(config.title);
+
+			cen::event_handler handler;
+			while (__flag_open) {
+				while (handler.poll()) {
+					if (handler.is<cen::quit_event>()) {
+						__flag_open = false;
+						break;	
+					}
+
+					if (handler.is<cen::mouse_button_event>()) {
+						auto x = handler.get<cen::mouse_button_event>();
+						if (x.pressed()) {
+							auto y = x.button();
+
+							input._evfirem(y == cen::mouse_button::left ? _CE_INPUT_HWND::MOUSEEVENT::M1 : 
+							(y == cen::mouse_button::right ? _CE_INPUT_HWND::MOUSEEVENT::M2 : (y == cen::mouse_button::middle ? 
+								_CE_INPUT_HWND::MOUSEEVENT::M3DOWN : _CE_INPUT_HWND::MOUSEEVENT::ANNONAMOUS)));
+						}
+					}
 				}
-				nk_layout_row_end(&_nk_context);
+				renderer.clear_with(cen::colors::white);
+				renderer.present();
+			
 			}
-			nk_end(&_nk_context);
 		}
 	};
+	VContainer addMouseEvent(std::vector<std::any> x, std::vector<Base::Decl> h) {
+
+	}
+	functional_protector < VContainer(std::vector<std::any>, std::vector<Base::Decl>*) centextMEventAdd;
 
 	VContainer createWindow(std::vector<std::any> a, std::vector<Base::Decl>*) {
 
-		if (_init_nk_window) return VContainer(-1, -1, Base::Decl::INT); // we only support one window instance as of now.
-		_init_nk_window = true;
+		if (_init_ce_window) return VContainer(-1, -1, Base::Decl::INT); // we only support one window instance as of now.
+		_init_ce_window = true;
 		auto [s] = cast<String>(a);
 
-		_NK_WINDOW_HWND HWND_instance(s.get()); // create the instance.
+		static _CE_WINDOW_HWND HWND_instance(s.get()); // create the instance.
 
 
 		auto _THR_WIN_HWND_MAINLOOP = ([&]() {
-			while (HWND_instance.wantsopen()) {
-				HWND_instance._mainloop_();
-			}
+			HWND_instance._mainloop_();
 		});
 		// starts the window thread.
 		std::thread _thr(_THR_WIN_HWND_MAINLOOP);
 
+		_thr.detach();
 
 		return VContainer(1, -1, Base::Decl::INT);
 	}
+
+#pragma endregion
+#pragma region _GAME_LIB
+
+	//Game util goes here.
+
+#pragma endregion
+#pragma region _GUI_LIB
 
 #pragma endregion
 #pragma region _INJECT_
@@ -92,7 +174,8 @@ namespace marine {
 	{
 		return (
 			injector{
-				{"window", 1, {Base::Decl::STRING}, createWindow}
+				{"initCenturionExternWindow", 1, {Base::Decl::STRING}, createWindow}
+				
 			});
 	}
 #pragma endregion

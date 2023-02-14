@@ -20,6 +20,13 @@ namespace marine {
 			configs = _configs;
 			setName(_name);
 		}
+		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs, Base::Decl d) :ValueHolder(val), name(_name)
+		{
+			__hasToken = false;
+			configs = _configs;
+			decl = d;
+			setName(_name);
+		}
 		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs) :ValueHolder(val), name(_name)
 		{
 			__hasToken = false;
@@ -58,6 +65,7 @@ namespace marine {
 		virtual std::string str() override {
 			return std::string("[var] name: " + name + ", val=" + orig.value + ", decl_type: " + Base::declStr(decl) + ", configurations: " + configsStr());
 		}
+		~Variable() = default;
 	};
 
 

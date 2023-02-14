@@ -389,6 +389,9 @@
     <ClInclude Include="inb-cpp\inbuilt_std_injected.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inb-cpp\centurion.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\Game\dependencies\SFML-2.5.1\include\SFML\Audio\SoundFileFactory.inl">

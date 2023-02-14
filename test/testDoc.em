@@ -1,9 +1,10 @@
 use windows
 
 
-WINDOW_HWND mywindow = createWindow("MyWindow!")
+Window window = createWindow("")
 
-while (1 == 1){
-int x = mywindow.pollFpsRate(60)
-log(x)
-}
+window.onMouseDown(lambda (MouseButton m) {
+    log(m)
+})
+
+window.open()
