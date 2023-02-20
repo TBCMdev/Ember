@@ -6,11 +6,14 @@
 
 #define CENTURION_NO_SDL_TTF
 #define CENTURION_NO_SDL_MIXER
+
+
+#define ASSERT_WINDOW_LOADED if(MAIN_WIND_HWND == nullptr) return;
+
 #include "centurion.hpp"
 
 #include <windows.h>
 #include <thread>
-
 
 
 namespace marine {
@@ -20,8 +23,12 @@ namespace marine {
 
 #pragma region _VISUALS_WINDOW
 
+	class _CE_WINDOW_HWND;
+
 
 	bool _init_ce_window;
+	static _CE_WINDOW_HWND* MAIN_WIND_HWND;
+
 	class _CE_WINDOW_HWND {
 
 	public:
@@ -48,21 +55,20 @@ namespace marine {
 			
 			void mouseMove(float x_coord, float y_coord) {
 				auto _end = e_mo.end();
-				auto x = std::find(e_mo.begin(), e_mo.end(), MOUSEEVENT::MOUSE_MOVE);
+				auto x = e_mo.find(MOUSEEVENT::MOUSE_MOVE);
 
 				if (x != _end)
 					Lambda::callFromCPP(&x->second, { VContainer(x_coord, -1, Base::Decl::FLOAT), VContainer(y_coord, -1, Base::Decl::FLOAT) });
 			}
 			void _evfirem(MOUSEEVENT e) {
 				auto _end = e_mo.end();
-				auto x = std::find(e_mo.begin(), e_mo.end(), e);
-
+				auto x = e_mo.find(e);
 				if (x != _end)
-					Lambda::callFromCPP(&x->second, { wrapEvent(e) });
+					Lambda::callFromCPP(&x->second, { /*wrapEvent(e)*/});
 			}
 			void _evfirek(std::string k_chr, KEYBOARDEVENT k) {
 				auto _end = e_kb.end();
-				auto x = std::find(e_kb.begin(), e_kb.end(), k);
+				auto x = e_kb.find(k);
 
 				if (x != _end)
 					Lambda::callFromCPP(&x->second, {
@@ -70,41 +76,51 @@ namespace marine {
 						});
 			}
 #pragma region connector
-			VContainer _push_mevent(std::vector<std::any> a, std::vector<Base::Decl>* x) {
+			void _push_mevent(std::vector<std::any> a, std::vector<Base::Decl>* x) {
+				const auto [state, button, lambda] = cast<int, int, Lambda>(a);
 
+				// make more user friendly other than static cast [TODO]
+
+				e_mo.insert({ static_cast<MOUSEEVENT>(button), lambda });
 			}
-			VContainer _push_kevent(std::vector<std::any> a, std::vector<Base::Decl>* x) {
-				return VContainer::null();
+			void _push_kevent(std::vector<std::any> a, std::vector<Base::Decl>* x) {
+
+				const auto [state, key, lambda] = cast<int, int, Lambda>(a);
+
+				e_kb.insert({ static_cast<KEYBOARDEVENT>(key), lambda });
+
 			}
 #pragma endregion
 		};
 
 	protected:
 		_CE_WINDOW_CFG config;
-		_CE_INPUT_HWND input;
 		bool __flag_open = true;
 
 
 
 	public:
+		_CE_INPUT_HWND input;
 		_CE_WINDOW_HWND(std::string& title) {
 			config.title = title;
 		};
 		void close() { __flag_open = false; }
 		bool wantsopen() { return __flag_open; }
-		void _mainloop_() {
+		void _mainloop_(bool* const open_flag = nullptr) {
 			const cen::sdl sdl;
 			// main loop here.
 
 			cen::window hwnd;
 			cen::renderer renderer = hwnd.make_renderer();
 
-
 			hwnd.show();
 
 			hwnd.set_title(config.title);
 
+
 			cen::event_handler handler;
+			if (open_flag != nullptr)
+				*open_flag = true;
 			while (__flag_open) {
 				while (handler.poll()) {
 					if (handler.is<cen::quit_event>()) {
@@ -116,7 +132,6 @@ namespace marine {
 						auto x = handler.get<cen::mouse_button_event>();
 						if (x.pressed()) {
 							auto y = x.button();
-
 							input._evfirem(y == cen::mouse_button::left ? _CE_INPUT_HWND::MOUSEEVENT::M1 : 
 							(y == cen::mouse_button::right ? _CE_INPUT_HWND::MOUSEEVENT::M2 : (y == cen::mouse_button::middle ? 
 								_CE_INPUT_HWND::MOUSEEVENT::M3DOWN : _CE_INPUT_HWND::MOUSEEVENT::ANNONAMOUS)));
@@ -129,29 +144,59 @@ namespace marine {
 			}
 		}
 	};
-	VContainer addMouseEvent(std::vector<std::any> x, std::vector<Base::Decl> h) {
 
+	
+
+	void addMouseEvent(std::vector<std::any> x, std::vector<Base::Decl>* h) {
+		ASSERT_WINDOW_LOADED;
+
+		
+		MAIN_WIND_HWND->input._push_mevent(x, h);
 	}
-	functional_protector < VContainer(std::vector<std::any>, std::vector<Base::Decl>*) centextMEventAdd;
 
-	VContainer createWindow(std::vector<std::any> a, std::vector<Base::Decl>*) {
+	void addKBEvent(std::vector<std::any> x, std::vector<Base::Decl>* h) {
+
+		ASSERT_WINDOW_LOADED;
+
+		MAIN_WIND_HWND->input._push_kevent(x, h);
+	}
+
+	VContainer createWindow(std::vector<std::any> a, std::vector<Base::Decl>* x) {
 
 		if (_init_ce_window) return VContainer(-1, -1, Base::Decl::INT); // we only support one window instance as of now.
 		_init_ce_window = true;
 		auto [s] = cast<String>(a);
 
-		static _CE_WINDOW_HWND HWND_instance(s.get()); // create the instance.
-
+		bool _await = false;
+		if (MAIN_WIND_HWND == nullptr) {
+			static _CE_WINDOW_HWND HWND_instance(s.get()); // create the instance.
+			MAIN_WIND_HWND = &HWND_instance;
+		}
 
 		auto _THR_WIN_HWND_MAINLOOP = ([&]() {
-			HWND_instance._mainloop_();
+			MAIN_WIND_HWND->_mainloop_(&_await);
 		});
 		// starts the window thread.
 		std::thread _thr(_THR_WIN_HWND_MAINLOOP);
 
+		while (!_await) {}
+
 		_thr.detach();
 
 		return VContainer(1, -1, Base::Decl::INT);
+	}
+	void initWindow(std::vector<std::any> a, std::vector<Base::Decl>* h) {
+		auto [x, str] = cast<int, String>(a);
+
+		if (x) {
+			a.erase(a.begin());
+			createWindow(a, h); 
+		}
+		else {
+			static _CE_WINDOW_HWND HWND_instance(str.get());
+			MAIN_WIND_HWND = &HWND_instance;
+		}
+
 	}
 
 #pragma endregion
@@ -164,18 +209,33 @@ namespace marine {
 
 #pragma endregion
 #pragma region _INJECT_
-	using injector = std::vector<
+	using injector_f = std::vector<
 		std::tuple<
 		const char*,
 		int,
 		std::vector<Base::Decl>,
-		marine::VContainer(*)(std::vector<std::any>, std::vector<Base::Decl>*)>>;
-	injector __get_to_be_injected_f()
+		std::function<marine::VContainer(std::vector<std::any>, std::vector<Base::Decl>*)>>>;
+	injector_f __get_to_be_injected_f()
 	{
 		return (
-			injector{
+			injector_f{
 				{"initCenturionExternWindow", 1, {Base::Decl::STRING}, createWindow}
-				
+			});
+	}
+	using injector_a = std::vector<
+		std::tuple<
+		const char*,
+		int,
+		std::vector<Base::Decl>,
+		std::function<void(std::vector<std::any>, std::vector<Base::Decl>*)>>>;
+	injector_a __get_to_be_injected_a()
+	{
+		return (
+			injector_a{
+				{"centextMEventAdd", 3, {Base::Decl::INT, Base::Decl::INT, Base::Decl::LAMBDA}, addMouseEvent},
+				{"centextKBEventAdd", 3, {Base::Decl::INT, Base::Decl::INT, Base::Decl::LAMBDA}, addKBEvent},
+				{"createCenWindowRequirements", 2, {Base::Decl::INT, Base::Decl::STRING}, initWindow}
+			
 			});
 	}
 #pragma endregion

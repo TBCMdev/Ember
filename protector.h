@@ -1,18 +1,30 @@
 #pragma once
 #include <functional>
 #include "MError.h"
+
+
+
+//DEPRECATED
 template<typename _Ret, typename... _Params>
 class functional_protector {
+	typedef std::function<_Ret(_Params...)> _Func;
 protected:
-	std::function<_Ret(_Params...)> on_success;
-	void* value;
+	_Func on_success;
+	void* value = nullptr;
 public:
-	functional_protector(std::function<_Ret(_Params...)> success, bool error_on_fail = true) : on_success(success) {
+	functional_protector(_Func success, void* const val, bool error_on_fail = true) : on_success(success), value(val) {
 
 	}
-	std::function<_Ret(_Params...)> get() {
-		return [=](Params... x) -> _Ret {
-
-		}
+	void set(void* const x) {
+		value = x;
+	}
+	void* const get() {
+		return value;
+	}
+	_Func create() {
+		return [&](_Params... x) -> _Ret {
+			std::cout << get();
+			if (get() != nullptr) return on_success(x...);
+		};
 	}
 };

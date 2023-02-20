@@ -130,7 +130,7 @@ namespace marine {
 	class Lambda;
 
 
-	std::function<VContainer(*)(Lambda*, std::vector<VContainer>&)> _LAMBDA_ON_CALL = nullptr;
+	std::function<VContainer(Lambda*, std::vector<VContainer>&)> _LAMBDA_ON_CALL = nullptr;
 
 	class Lambda : public Function {
 	public:

@@ -6,6 +6,7 @@ class Window{
 [public]
     string title = ""
     constructor(string t) => title(t){
+        createCenWindowRequirements(0, t)
     }
     method open(){
         # opens the window on another thread.
@@ -14,7 +15,7 @@ class Window{
 
         while(1 == 1){}
     }
-    method onMouseButtonDown(int button, lambda func){
+    method onMouseDown(int button, lambda func){
         centextMEventAdd(0, button, func)
     }
 }

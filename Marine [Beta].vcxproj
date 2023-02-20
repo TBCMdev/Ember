@@ -264,6 +264,7 @@
     <ClInclude Include="ObjectHandler.h" />
     <ClInclude Include="Operator.h" />
     <ClInclude Include="Parser.h" />
+    <ClInclude Include="protector.h" />
     <ClInclude Include="Register.h" />
     <ClInclude Include="Scope.h" />
     <ClInclude Include="Serialized.h" />

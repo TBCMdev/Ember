@@ -41,6 +41,9 @@ namespace marine {
 		int start_range = -1;
 		int old_end_range = -1;
 		int end_range;
+
+		int m_ParserLockKey = -1; // -1 specifies that parser can parse freely.
+
 		void __reload() {
 			end_range = gen.size();
 			//more reloads...
@@ -1137,18 +1140,47 @@ namespace marine {
 			else {
 				//lone var with no value
 				advance();
-				Variable ret(decl_name.value, nullptr, "NULL", conf);
+				Variable ret(decl_name.value, nullptr, conf);
 				ret.setDecl(type);
 				if (push)scope.addVariable(ret);
 				return ret;
 			}
 
 		}
+		/// <summary>
+		/// returns an int that provides access to the parse function from 1 place,
+		/// like a key. This is to prevent the flow of code elsewhere to continue,
+		/// and we have 2 or more things trying to be parsed at once.
+		/// </summary>
+		void setParserLock(int key) {
+			m_ParserLockKey = key;
+		}
+		void resetParserLock() {
+			m_ParserLockKey = -1;
+		}
 		VContainer callLambda(Lambda* l, std::vector<VContainer>& p){
+			while(m_ParserLockKey == 1) {}
+
+			setParserLock(1);
+
+			int c = index;
+			if (!setCaret(l->getStart(), 1)) std::cout << ("COULD NOT SET CARET.\n");
+			VContainer v(nullptr, depth, Base::Decl::UNKNWN);
+			incDepth();
 
 
+			while (index < l->getEnd()) {
+				if (parse(&v, 1)) break;
+			}
 
-			return VContainer(nullptr, depth, Base::Decl::UNKNWN);
+
+			setCaret(c);
+			decDepth();
+
+
+			resetParserLock();
+
+			return v;
 		}
 		Lambda parseLambdaDecl() {
 			lexertk::token start;
@@ -1164,8 +1196,7 @@ namespace marine {
 
 			advance();
 			if (Base::is(cur(), "(")) {
-				advance();
-				if (!Base::is(getNext(), ")")) {
+				if (!Base::is(advance(), ")")) {
 					while (canAdvance()) {
 						advance();
 						parameters.push_back(parseDecl(false));
@@ -1213,6 +1244,7 @@ namespace marine {
 			int brc = 0;
 			int nbr_c = 0;
 			for(int i = index + 1; i < gen.size(); i++){
+
 				if (Base::is(gen[i], ")")) brc--;
 				else if (Base::is(gen[i], "(")) brc++;
 				else if (Base::is(gen[i], "[")) nbr_c++;
@@ -1304,9 +1336,11 @@ namespace marine {
 						}
 					}
 				}
+				else if (isFuncCall(i)) {
+					ret.push_back(Base::Decl::RUNTIME_DECIDED);	
+				}
+				
 				//else if(brc == 1 && nbr_c == 0 && !Base::is(gen[i], ","))ret.push_back(Base::Decl::STRING);//[TODO add Base::Decl::CUSTOM]
-				
-				
 				if (brc == 0 && nbr_c == 0) break;
 			}
 			return ret;
@@ -1353,7 +1387,6 @@ namespace marine {
 					}
 					case Base::Decl::STRING: {
 						String ret = parseExtParam<String>();
-						std::cout << ret.get() << '\n';
 						p.setValue(ret);
 						p.setTokenStr(ret.get());
 						break;
@@ -1537,8 +1570,9 @@ namespace marine {
 				//call
 
 				int nbr_i = 0;
-
 				auto PredictedParameterTypes = predictParameterInbFuncCallTypes();
+
+
 				inb::Callable* c;
 				c = &inb::getNoIncludeActionByName(name.value,PredictedParameterTypes);
 				if (c->name == "NULL") {
@@ -1560,7 +1594,7 @@ namespace marine {
 						param++;
 					}
 
-					//try {
+					try {
 						if (c->paramTypes.size() > param) {
 							switch (c->paramTypes[param]) {
 							case Base::Decl::INT:
@@ -1579,6 +1613,13 @@ namespace marine {
 								parameters.push_back(parseExtParam<ArrayList>());
 								allDecls.push_back(Base::Decl::LIST);
 								break;
+							case Base::Decl::LAMBDA:
+							{
+								auto& v = getVariable(advance());
+								parameters.push_back(v.getValue());
+								allDecls.push_back(Base::Decl::LAMBDA);
+								break;
+							}
 							default: {
 								st_spr(cur().value, marine::out::STATUS::WARN);
 								break;
@@ -1617,11 +1658,11 @@ namespace marine {
 								break;
 							}
 						}
-					//}
-					//catch (std::exception& ig) {
-					////	throw ig;
-					//	throw marine::errors::IndexError("function parameter either does not exist or you have exceeded the amount of parameters the function is asking for.");
-					//}
+					}
+					catch (std::exception& ig) {
+						throw ig;
+						throw marine::errors::IndexError("function parameter either does not exist or you have exceeded the amount of parameters the function is asking for.");
+					}
 					advance();
 				}
 				VContainer returnValue;
@@ -1852,7 +1893,6 @@ namespace marine {
 
 		int nbr_i = 0;
 
-		scope.setLists(structure);
 
 		advance();
 		while (canAdvance()) {
@@ -1889,17 +1929,27 @@ namespace marine {
 					p.setTokenStr(ret.get());
 					break;
 				}
+				case Base::Decl::LAMBDA: {
+
+					Lambda l = getVariable(advance()).castRef<Lambda>();
+
+					p.setValue(l);
+					break;
+				}
 				}
 				allDecls.push_back(p.getDecl());
 				variables.push_back(p);
 				scope.addVariable(p);
 			}
 			catch (std::exception& ig) {
+				throw ig;
 				throw marine::errors::IndexError("function parameter either does not exist or you have exceeded the amount of parameters the function is asking for.");
 			}
 
 			advance();
 		}
+		scope.setLists(structure);
+		for (auto& x : variables) scope.addVariable(x);
 		//FUNC EXECUTION
 		advance();
 
@@ -2700,7 +2750,9 @@ namespace marine {
 		return (Base::is(cur(), "lambda"));
 	}
 #pragma endregion
-	bool parse(ValueHolder* v = nullptr) {
+	bool parse(ValueHolder* v = nullptr, const int lockKey = -1) {
+
+		if (lockKey != m_ParserLockKey && m_ParserLockKey != -1) return false;
 		if (isDecl()) {
 			parseDecl();
 		}
@@ -2801,7 +2853,10 @@ namespace marine {
 	}
 
 
-	bool setCaret(int i) {
+	bool setCaret(int i, int lock = -1) {
+
+		if (lock != m_ParserLockKey && m_ParserLockKey != -1) return false;
+
 		if (i > end_range) return false;
 		old_index = index;
 		index = i;

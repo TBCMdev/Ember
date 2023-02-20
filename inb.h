@@ -23,19 +23,12 @@ namespace marine {
 
 	namespace inb {
 #pragma region internal_backend
-		using Action = void* (*)(std::vector<std::any>, std::vector<Base::Decl>*);
+		using Action = std::function<void(std::vector<std::any>, std::vector<Base::Decl>*)>;
 
-		using Function = marine::VContainer (*)(std::vector<std::any>, std::vector<Base::Decl>*);
+		using Function = std::function<marine::VContainer(std::vector<std::any>, std::vector<Base::Decl>*)>;
 
 		
 
-		struct IFunc {
-			const char* name;
-			int _param_c = 0;
-			Base::RetDecl returnType;
-			std::vector<Base::Decl> paramDeclTypes;
-			std::vector<std::any> parameters = {};
-		};
 		struct Callable {
 		public:
 			const char* name;
@@ -233,10 +226,10 @@ namespace marine {
 			}
 		}
 		std::vector <inb_action> __NO_INCLUDE_ACTIONS = {
-			{"log", 1, {Base::Decl::STRING},(void*(*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_s},
-			{"log", 1, {Base::Decl::INT},(void* (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_i},
-			{"log", 1, {Base::Decl::LIST},(void* (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_l},
-			{"log", -1, {},(void* (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_any},
+			{"log", 1, {Base::Decl::STRING},(void(*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_s},
+			{"log", 1, {Base::Decl::INT},(void (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_i},
+			{"log", 1, {Base::Decl::LIST},(void (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_l},
+			{"log", -1, {},(void (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_any},
 
 		};
 		std::vector<inb_function> __NO_INCLUDE_FUNCTIONS = {
@@ -272,12 +265,17 @@ namespace marine {
 		}
 		void inject_inb_std() {
 			std::vector<inb_function> functions;
-			std::vector<Action> actions;
+			std::vector<inb_action> actions;
 
 			for (auto& x : __get_to_be_injected_f()) {
 				functions.push_back(inb_function{std::get<0>(x) , std::get<1>(x), std::get<2>(x), std::get<3>(x)});
 
 			}
+			for (auto& x : __get_to_be_injected_a()) {
+				actions.push_back(inb_action{ std::get<0>(x) , std::get<1>(x), std::get<2>(x), std::get<3>(x) });
+
+			}
+			__NO_INCLUDE_ACTIONS.insert(__NO_INCLUDE_ACTIONS.end(), actions.begin(), actions.end());
 
 			__NO_INCLUDE_FUNCTIONS.insert(__NO_INCLUDE_FUNCTIONS.end(), functions.begin(), functions.end());
 

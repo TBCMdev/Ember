@@ -1,10 +1,10 @@
 use windows
 
+Window window = createWindow("Lambda test")
 
-Window window = createWindow("")
-
-window.onMouseDown(lambda (MouseButton m) {
-    log(m)
-})
+lambda mouseDown = lambda {
+    log("Mouse Button Clicked!")
+}
+window.onMouseDown(0, mouseDown)
 
 window.open()
