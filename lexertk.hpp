@@ -80,7 +80,8 @@ namespace lexertk
                 ('{' == c) || ('}' == c) ||
                 ('%' == c) || (':' == c) ||
                 ('?' == c) || ('&' == c) ||
-                ('|' == c) || (';' == c);
+                ('|' == c) || (';' == c) ||
+                ('~' == c);
         }
 
         inline bool is_letter(const char c)
@@ -246,7 +247,7 @@ namespace lexertk
             value(""),
             position(std::numeric_limits<std::size_t>::max())
         {}
-        token(std::string s): type(e_string), value(s.c_str()), position(std::numeric_limits<std::size_t>::max()){}
+        token(std::string s) : type(e_string), value(s.c_str()), position(std::numeric_limits<std::size_t>::max()) {}
         void clear()
         {
             type = e_none;
@@ -407,7 +408,17 @@ namespace lexertk
             token_itr_ = token_list_.end();
             store_token_itr_ = token_list_.end();
         }
-
+        inline auto ibegin() { return token_list_.begin(); }
+        inline auto iend() { return token_list_.end(); }
+        inline void snipout(generator::token_list_itr_t start, generator::token_list_itr_t end) {
+            token_list_.erase(start, end);
+        }
+        inline void insert(generator::token_list_itr_t at, lexertk::token item) {
+            token_list_.insert(at, item);
+        }
+        inline void resize(size_t size){
+            token_list_.resize(token_list_.size() + size);
+        }
         inline bool process(const std::string& str)
         {
             base_itr_ = str.data();
@@ -575,7 +586,6 @@ namespace lexertk
                 skip_comments();
             }
         }
-
         inline void scan_token()
         {
             skip_whitespace();
@@ -644,7 +654,6 @@ namespace lexertk
                 else if ((c0 == '-') && (c1 == '>')) ttype = token_t::m_retarr;
 
 
-
                 if (token_t::e_none != ttype)
                 {
                     t.set_operator(ttype, s_itr_, s_itr_ + 2, base_itr_);
@@ -663,6 +672,8 @@ namespace lexertk
             else if ('&' == *s_itr_)
                 t.set_symbol(s_itr_, s_itr_ + 1, base_itr_);
             else if ('|' == *s_itr_)
+                t.set_symbol(s_itr_, s_itr_ + 1, base_itr_);
+            else if ('~' == *s_itr_)
                 t.set_symbol(s_itr_, s_itr_ + 1, base_itr_);
             else
                 t.set_operator(token_t::token_type(*s_itr_), s_itr_, s_itr_ + 1, base_itr_);
@@ -855,7 +866,7 @@ namespace lexertk
             return;
         }
 
-       
+
         token_list_t token_list_;
     private:
 
