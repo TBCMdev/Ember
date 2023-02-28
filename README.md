@@ -21,9 +21,9 @@ Here is a barebones program in ember to print a question to the console, and wai
 ```
 string response = ask("Enter your age: ")
 
-print("Converting to int...")
+log("Converting to int...")
 
-print(toint(response, true)) # True specifies that if something went wrong, we return -1 with no errors.
+log(toint(response, true)) # True specifies that if something went wrong, we return -1 with no errors.
 ```
 
 

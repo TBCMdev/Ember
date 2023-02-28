@@ -1,0 +1,4 @@
+~define PRINTHELLO { log("Hello!") }
+
+
+
