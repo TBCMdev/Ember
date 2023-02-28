@@ -1,10 +1,7 @@
-use windows
+use game
 
-Window window = createWindow("Lambda test")
+vec2 windowScale = new vec2(800, 800)
 
-lambda mouseDown = lambda {
-    log("Mouse Button Clicked!")
-}
-window.onMouseDown(0, mouseDown)
+Game mygame = new Game("my cool game!", windowScale)
 
-window.open()
+mygame.mainloop()

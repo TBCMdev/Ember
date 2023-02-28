@@ -85,6 +85,7 @@ namespace marine {
 			}
 			virtual std::any calc() {
 				//std::cout << "calculating node:" << repr() << std::endl;
+				if (type == Base::Decl::NULLIFIED) return nullptr;
 				if (isSingular()) {
 					switch (type) {
 					case Base::Decl::INT:

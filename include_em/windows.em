@@ -6,17 +6,17 @@ class Window{
 [public]
     string title = ""
     constructor(string t) => title(t){
-        createCenWindowRequirements(0, t)
+        __createCenWindowRequirements(0, t)
     }
     method open(){
         # opens the window on another thread.
-        initCenturionExternWindow(title)
+        __initCenturionExternWindow(title)
         
 
         while(1 == 1){}
     }
     method onMouseDown(int button, lambda func){
-        centextMEventAdd(0, button, func)
+        __centextMEventAdd(0, button, func)
     }
 }
 

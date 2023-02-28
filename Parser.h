@@ -649,6 +649,9 @@ namespace marine {
 						operatorStack.push_back(Operator(cur()));
 					}
 				}
+				else if (Base::is(cur(), "nothing")) {
+					operationStack.push_back(std::make_shared<Node>(cur(), Base::Decl::NULLIFIED));
+				}
 
 				if (operatorStack.size() > 0 && operationStack.size() > 1) {
 					std::shared_ptr<Node> right = operationStack.back();
@@ -672,7 +675,7 @@ namespace marine {
 
 			if (take_raw != nullptr) {
 				auto x = operation->calc(); 
-				*take_raw_decl = Node::getRootNodeType(&*operation, true);
+				*take_raw_decl = Node::getRootNodeType(operation.get(), true);
 				*take_raw = x;
 				return finalVal;
 			}
@@ -955,6 +958,7 @@ namespace marine {
 			}
 			else {
 				//other ways of creating a class variable
+				if (Base::is(getNext(), "nothing")) return Variable(var_name, nullptr, {});
 				std::any raw;
 				Base::Decl raw_decl;
 				parseExt<std::any>(Base::Decl::STATIC_OBJECT, &raw, &raw_decl);
@@ -1396,6 +1400,11 @@ namespace marine {
 						p.setValue(ret);
 						break;
 					}
+					case Base::Decl::STATIC_OBJECT:
+					{
+						p.setValue(getVariable(cur()).getValue());
+						break;
+					}
 					}
 					allDecls.push_back(p.getDecl());
 					variables.push_back(p);
@@ -1433,7 +1442,7 @@ namespace marine {
 
 			if (!setCaret(f->getStart())) DEBUG("COULD NOT SET CARET.");
 			while (index < f->getEnd()) {
-
+				std::cout << "Cur:" << cur().value << '\n';
 				if (parse()) {
 					//if (return_parent != nullptr)*return_parent = true;
 					break;
@@ -1638,7 +1647,6 @@ namespace marine {
 							case Base::Decl::INT:
 								parameters.push_back(std::any_cast<int> (raw));
 								allDecls.push_back(Base::Decl::INT);
-
 								break;
 							case Base::Decl::FLOAT:
 								parameters.push_back(std::any_cast<float> (raw));
@@ -2751,7 +2759,6 @@ namespace marine {
 	}
 #pragma endregion
 	bool parse(ValueHolder* v = nullptr, const int lockKey = -1) {
-
 		if (lockKey != m_ParserLockKey && m_ParserLockKey != -1) return false;
 		if (isDecl()) {
 			parseDecl();

@@ -219,7 +219,7 @@ namespace marine {
 	{
 		return (
 			injector_f{
-				{"initCenturionExternWindow", 1, {Base::Decl::STRING}, createWindow}
+				{"__initCenturionExternWindow", 1, {Base::Decl::STRING}, createWindow}
 			});
 	}
 	using injector_a = std::vector<
@@ -232,9 +232,9 @@ namespace marine {
 	{
 		return (
 			injector_a{
-				{"centextMEventAdd", 3, {Base::Decl::INT, Base::Decl::INT, Base::Decl::LAMBDA}, addMouseEvent},
-				{"centextKBEventAdd", 3, {Base::Decl::INT, Base::Decl::INT, Base::Decl::LAMBDA}, addKBEvent},
-				{"createCenWindowRequirements", 2, {Base::Decl::INT, Base::Decl::STRING}, initWindow}
+				{"__centextMEventAdd", 3, {Base::Decl::INT, Base::Decl::INT, Base::Decl::LAMBDA}, addMouseEvent},
+				{"__centextKBEventAdd", 3, {Base::Decl::INT, Base::Decl::INT, Base::Decl::LAMBDA}, addKBEvent},
+				{"__createCenWindowRequirements", 2, {Base::Decl::INT, Base::Decl::STRING}, initWindow}
 			
 			});
 	}
