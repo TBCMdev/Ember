@@ -386,13 +386,13 @@
     <ClInclude Include="Injector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inb-cpp\inbuilt_std_injected.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inb-cpp\centurion.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="protector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="precompiler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="validated_map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

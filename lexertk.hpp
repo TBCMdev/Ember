@@ -856,7 +856,7 @@ namespace lexertk
                 t.set_string(begin - 1, s_itr_ + 1, base_itr_); //FROM begin,s_itr_,base_itr_ TO begin - 1,s_itr_ + 1,base_itr_ (strings are parsed in this without " or ', so it will now -1 and +1 the offset to get those included.)
             else
             {
-                std::string parsed_string(begin, s_itr_);
+                std::string parsed_string(begin - 1, s_itr_ + 1);
                 details::cleanup_escapes(parsed_string);
                 t.set_string(parsed_string, std::distance(base_itr_, begin));
             }

@@ -2,6 +2,10 @@
 #include <iostream>
 #include <exception>
 #include <sstream>
+
+#define CERROR(n) n(const char* what) : MError(MError::construct(what, #n).c_str())
+
+
 namespace marine {
 	namespace errors {
 		struct MError : public std::exception {
@@ -16,23 +20,27 @@ namespace marine {
 		};
 		struct SyntaxError : public MError {
 		public:
-			SyntaxError(const char* what) : MError(MError::construct(what, "Syntax Error").c_str()) {}
+			CERROR(SyntaxError) {}
 		};
 		struct IndexError : public MError {
 		public:
-			IndexError(const char* what) : MError(MError::construct(what, "Index Error").c_str()) {}
+			CERROR(IndexError) {}
 		};
 		struct RuntimeError : public MError {
 		public:
-			RuntimeError(const char* what) : MError(MError::construct(what, "Runtime Error").c_str()) {}
+			CERROR(RuntimeError) {}
 		};
 		struct TypeError : public MError {
 		public:
-			TypeError(const char* what) : MError(MError::construct(what, "Type Error").c_str()) {}
+			CERROR(TypeError) {}
 		};
 		struct FileError : public MError {
 		public:
-			FileError(const char* what) : MError(MError::construct(what, "File Error").c_str()) {}
+			CERROR(FileError) {}
+		};
+		struct DLLInjectError : public MError {
+		public:
+			CERROR(DLLInjectError) {}
 		};
 	}
 }

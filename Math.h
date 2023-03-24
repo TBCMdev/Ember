@@ -522,8 +522,12 @@ namespace marine {
 			std::shared_ptr<VContainer> internal_value = nullptr;
 		public:
 			//(new VContainer) needed to keep lifetime of shared ptr, if you use the & of v, v will be destroyed.
-			VCNode(VContainer& v, bool __negate = false) : internal_value(new VContainer(v)), Node(lexertk::token(v.getStringified()), v.type(), __negate) {
-			}
+			VCNode(VContainer& v, bool __negate = false) :
+				internal_value(new VContainer(v)), Node(lexertk::token(v.getStringified()), v.type(), __negate)
+			{}
+			VCNode(std::any a, Base::Decl d, bool __negate = false) :
+				internal_value(new VContainer(a, -1, d)), Node(lexertk::token(internal_value->getStringified()), internal_value->type(), __negate) 
+			{}
 			bool isVariable() override { return true; }
 			virtual bool isSingular() override {
 				return false;

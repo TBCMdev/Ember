@@ -3,32 +3,42 @@
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\helpers.h(61,13): warning C4834: discarding return value of function with 'nodiscard' attribute
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Types.h(92,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Module.h(22,30): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(96,23): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(159,36): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(78,23): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(142,36): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(236,27): warning C4101: 's': unreferenced local variable
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\ObjectHandler.h(21,27): warning C4091: 'static ': ignored on left of 'ObjectHandler' when no variable is declared
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\ObjectHandler.h(165,2): warning C4091: 'static ': ignored on left of 'ObjectHandler' when no variable is declared
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(21,1): warning C4005: 'DEBUG': macro redefinition
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(9): message : see previous definition of 'DEBUG'
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(48,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(64,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(206,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(283,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(289,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2876,20): warning C4018: '<=': signed/unsigned mismatch
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(254): warning C4172: returning address of local variable or temporary: null
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(264): warning C4172: returning address of local variable or temporary: null
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(214,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(291,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(297,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2913,20): warning C4018: '<=': signed/unsigned mismatch
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(93,38): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(192,52): warning C4267: '-=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(193,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(240,9): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(240,9): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(254,28): warning C4101: 'e': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1708,29): warning C4101: 'ig': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(449): message : see reference to function template instantiation 'Type marine::Parser::parseFuncCall<marine::VContainer>(bool *)' being compiled
+          with
+          [
+              Type=marine::VContainer
+          ]
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\VContainer.h(33): warning C4715: 'marine::VContainer::VCStr': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2558): warning C4715: 'marine::Parser::parseForStatement': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1868): warning C4715: 'marine::Parser::parseWhileStatement': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2399): warning C4715: 'marine::Parser::parseVariableUsage': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(687): warning C4715: 'marine::ext::BoolExpr::evaluate': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1905): warning C4715: 'marine::Parser::parseWhileStatement': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2595): warning C4715: 'marine::Parser::parseForStatement': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2436): warning C4715: 'marine::Parser::parseVariableUsage': not all control paths return a value
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Importer.h(38): warning C4715: 'marine::Importer::importExists': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(974): warning C4715: 'marine::Parser::parseClassInstantiation': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(340): warning C4172: returning address of local variable or temporary: v
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2227): warning C4715: 'marine::Parser::parseSafeVariableUsage': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(691): warning C4715: 'marine::ext::BoolExpr::evaluate': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1009): warning C4715: 'marine::Parser::parseClassInstantiation': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(354): warning C4172: returning address of local variable or temporary: v
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2264): warning C4715: 'marine::Parser::parseSafeVariableUsage': not all control paths return a value
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Class.h(151): warning C4715: 'marine::ClassHandler::getClassByName': not all control paths return a value
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Variable.h(197): warning C4172: returning address of local variable or temporary: x
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(590): warning C4715: 'marine::ext::BoolExpr::repr': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2752): warning C4715: '`marine::Parser::parseModuleUsage'::`2'::<lambda_1>::operator()': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\helpers.h(74): warning C4715: 'marine::isBool': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(594): warning C4715: 'marine::ext::BoolExpr::repr': not all control paths return a value
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2789): warning C4715: '`marine::Parser::parseModuleUsage'::`2'::<lambda_1>::operator()': not all control paths return a value
   Marine [Beta].vcxproj -> C:\Users\krist\source\repos\Marine [Beta]\x64\Debug\Ember [Beta].exe

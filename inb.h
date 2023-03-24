@@ -10,8 +10,10 @@
 #include <tuple>
 #include "String.h"
 #include "Module.h"
+#include "Injector.h"
 
-#include "inb-cpp/inbuilt_std_injected.h"
+#include "validated_map.h"
+
 
 #define VCONTAINERFUNC marine::VContainer(*)(std::vector<std::any>, std::vector<Base::Decl>*)
 
@@ -19,10 +21,7 @@ using std::string;
 
 
 namespace marine {
-
-
 	namespace inb {
-#pragma region internal_backend
 		using Action = std::function<void(std::vector<std::any>, std::vector<Base::Decl>*)>;
 
 		using Function = std::function<marine::VContainer(std::vector<std::any>, std::vector<Base::Decl>*)>;
@@ -31,12 +30,11 @@ namespace marine {
 
 		struct Callable {
 		public:
-			const char* name;
 			int parameter_count;
 			std::vector <Base::Decl> paramTypes;
 
 			virtual void call(std::vector<std::any> a, marine::VContainer* v = nullptr, std::vector<Base::Decl>* help = nullptr) {
-				throw marine::errors::RuntimeError(" a callable cannot contain no callable item.");
+				throw marine::errors::RuntimeError("a callable cannot contain no callable item.");
 			}
 
 		};
@@ -55,8 +53,7 @@ namespace marine {
 				callable(a, help);
 			}
 		public:
-			inb_action(const char* n, int param_c, std::vector<Base::Decl> param_types, Action c) : callable(c) {
-				name = n;
+			inb_action(int param_c, std::vector<Base::Decl> param_types, Action c) : callable(c) {
 				parameter_count = param_c;
 				paramTypes = param_types;
 			}
@@ -65,32 +62,17 @@ namespace marine {
 			Function callable;
 
 			void call(std::vector<std::any> a, marine::VContainer* v, std::vector<Base::Decl>* help = nullptr) override {
-				
 				*v = callable(a, help);
 			}
 		public:
-			inb_function(const char* n, int param_c, std::vector<Base::Decl> param_types, Function c) : callable(c) {
-				name = n;
+			inb_function(int param_c, std::vector<Base::Decl> param_types, Function c) : callable(c) {
 				parameter_count = param_c;
 				paramTypes = param_types;
 			}
 
 		};
-#pragma endregion
 		namespace console {
-			void log_s(std::vector<std::any> x, std::vector<Base::Decl>* info) {
-				std::cout << std::any_cast<String>(x[0]).get() << std::endl;
-			}
-			void log_i(std::vector<std::any> f, std::vector<Base::Decl>* info) {
-				std::cout << std::any_cast<int>(f[0]) << std::endl;
-
-			}
-			void log_l(std::vector<std::any> l, std::vector<Base::Decl>* info) {
-				auto [list] = cast<ArrayList>(l);
-
-				std::cout << list.str();
-			}
-			void log_any(std::vector<std::any> l, std::vector<Base::Decl>* info) {
+			VContainer log_any(std::vector<std::any> l, std::vector<Base::Decl>* info) {
 				std::stringstream s;
 				int c = 0;
 				int len = l.size();
@@ -106,7 +88,7 @@ namespace marine {
 						s << std::any_cast<float>(l[c]);
 						break;
 					case Base::Decl::BOOL:
-						s << (std::any_cast<bool>(l[c]) == 1 ? "true" : "false");
+						s << (std::any_cast<bool>(l[c]) == true ? "true" : "false");
 						break;
 					case Base::Decl::LIST:
 						s << std::any_cast<ArrayList>(l[c]).str();
@@ -119,6 +101,7 @@ namespace marine {
 					c++;
 				}
 				std::cout << s.str() << "\n";
+				return VContainer::null();
 			}
 			marine::VContainer ask(std::vector<std::any> a, std::vector<Base::Decl>* info) {
 				auto [str] = cast<String>(a);
@@ -225,59 +208,49 @@ namespace marine {
 				}
 			}
 		}
-		std::vector <inb_action> __NO_INCLUDE_ACTIONS = {
-			{"log", 1, {Base::Decl::STRING},(void(*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_s},
-			{"log", 1, {Base::Decl::INT},(void (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_i},
-			{"log", 1, {Base::Decl::LIST},(void (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_l},
-			{"log", -1, {},(void (*)(std::vector<std::any>, std::vector<Base::Decl>*))inb::console::log_any},
-
-		};
-		std::vector<inb_function> __NO_INCLUDE_FUNCTIONS = {
-			{"ask", 1, {Base::Decl::STRING}, (VCONTAINERFUNC)inb::console::ask},
-			{"toint", 1, {Base::Decl::STRING}, (VCONTAINERFUNC)inb::conversion::str_to_int},
-			{"range", -1, {/*-1 with no params so we can decide which overloaded func to use in the function itself.*/},(VCONTAINERFUNC)inb::util::lists::range},
-			{"enumerate", 1, {Base::Decl::LIST}, (VCONTAINERFUNC)inb::util::lists::enumerate },
-			{"power", 2, {Base::Decl::INT, Base::Decl::INT}, (VCONTAINERFUNC)inb::util::math::pow}
-		};
-
-
-
-		inb_action& getNoIncludeActionByName(std::string& name, std::vector<Base::Decl> paramTypes) {
-			for (auto& v : __NO_INCLUDE_ACTIONS) {
-				if (v.name == name && v.paramTypes == paramTypes) return v;
+		validated_map <std::pair<std::string, std::vector<Base::Decl>>, inb_function, true> __NO_INCLUDE_FUNCTIONS{ {
+			{
+				{"ask", {Base::Decl::STRING}},
+					{1, {Base::Decl::STRING}, (VCONTAINERFUNC)inb::console::ask} },
+			{
+				{"toint", {Base::Decl::STRING}},
+					{1, {Base::Decl::STRING}, (VCONTAINERFUNC)inb::conversion::str_to_int}},
+			{
+				{"range", {}},
+					{ -1, {/*-1 with no params so we can decide which overloaded func to use in the function itself.*/},(VCONTAINERFUNC)inb::util::lists::range} },
+			{
+				{"enumerate", {Base::Decl::LIST}},
+					{1, {Base::Decl::LIST}, (VCONTAINERFUNC)inb::util::lists::enumerate }},
+			{
+				{"power", {Base::Decl::INT}},
+					{2, {Base::Decl::INT, Base::Decl::INT}, (VCONTAINERFUNC)inb::util::math::pow}},
+			{
+				{"log", {Base::Decl::RUNTIME_DECIDED}},
+					{-1, {}, (VCONTAINERFUNC)inb::console::log_any}
 			}
-			//iterate again to find a better match, ex unknown parameter count functions or runtime decided type parameter functions
-			for (auto& v : __NO_INCLUDE_ACTIONS) {
-				if (v.name == name && v.parameter_count == -1) return v; // in future consider other options like overloads!!! [TODO]
+		} };
+		inb_function* getNoIncludeFunctionByName(std::string& name, std::vector<Base::Decl> paramTypes) {
+			try {
+				return __NO_INCLUDE_FUNCTIONS[{name, paramTypes}];
 			}
-			inb_action null{ "NULL", 0,{},  nullptr };
-			return null;
+			catch (std::exception& s) { return nullptr; }
 		}
-		inb_function& getNoIncludeFunctionByName(std::string& name, std::vector<Base::Decl> paramTypes) {
-			for (auto& v : __NO_INCLUDE_FUNCTIONS) {
-				if (v.name == name && v.paramTypes == paramTypes) return v;
-			}
-			for (auto& v : __NO_INCLUDE_FUNCTIONS) {
-				if (v.name == name && v.parameter_count == -1) return v; // in future consider other options like overloads!!! [TODO]
-			}
-			inb_function null{ "NULL", 0,{},  nullptr };
-			return null;
-		}
-		void inject_inb_std() {
-			std::vector<inb_function> functions;
-			std::vector<inb_action> actions;
+		void inject_inb_std(std::unordered_map<std::string, std::any>* VMapOUT = nullptr) {
+			std::unordered_map<std::string, std::tuple<std::vector<Base::Decl>, EMBER_DLL_FUNC>> FMap;
+			std::unordered_map<std::string, std::any> VMap;
 
-			for (auto& x : __get_to_be_injected_f()) {
-				functions.push_back(inb_function{std::get<0>(x) , std::get<1>(x), std::get<2>(x), std::get<3>(x)});
 
+			if (!_InjectEmberDLL(EMBER_INB_DLL_LOCATION + "\\em_included.dll", &FMap, &VMap)) {
+				throw marine::errors::DLLInjectError("main 'included' could not be injected. Fatal crash. Please check the Ember install dir for missing dlls.");
 			}
-			for (auto& x : __get_to_be_injected_a()) {
-				actions.push_back(inb_action{ std::get<0>(x) , std::get<1>(x), std::get<2>(x), std::get<3>(x) });
-
+			if (!_InjectEmberDLL(EMBER_INB_DLL_LOCATION + "\\em_inb.dll", &FMap, &VMap)) {
+				throw marine::errors::DLLInjectError("INB DLL could not be injected. Fatal crash. Please check the Ember install dir for missing dlls.");
 			}
-			__NO_INCLUDE_ACTIONS.insert(__NO_INCLUDE_ACTIONS.end(), actions.begin(), actions.end());
-
-			__NO_INCLUDE_FUNCTIONS.insert(__NO_INCLUDE_FUNCTIONS.end(), functions.begin(), functions.end());
+			for (const auto& entry : FMap) {
+				const auto& v = std::get<0>(entry.second);
+				__NO_INCLUDE_FUNCTIONS.insert({entry.first, v}, { (int)v.size(), v, std::get<1>(entry.second)});
+			}
+			if (VMapOUT != nullptr) *VMapOUT = VMap;
 
 		}
 	}

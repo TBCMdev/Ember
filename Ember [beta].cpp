@@ -12,6 +12,7 @@
 #include "Parser.h"
 #include "inb.h"
 #include "helpers.h"
+#include "precompiler.h"
 #include <Windows.h>
 #include <stdio.h>
 #include <conio.h>
@@ -22,8 +23,11 @@ protected:
 	std::chrono::duration<float> dur;
 	const char* name;
 public:
-	MTimer(const char* func_name) : name(func_name) { start = std::chrono::high_resolution_clock::now(); }
-	~MTimer() {
+	MTimer(const char* func_name) : name(func_name) {}
+	void start_timer() {
+		start = std::chrono::high_resolution_clock::now();
+	}
+	void stop_timer() {
 
 		end = std::chrono::high_resolution_clock::now();
 		dur = end - start;
@@ -74,9 +78,6 @@ public:
 				std::ostringstream buffer;
 				buffer << t.rdbuf();
 				string str = buffer.str();
-
-				// if (debug) cout << "returning:" + ReplaceAll(str,"\n","\\n") << endl;
-
 				return str;
 			}
 
@@ -144,8 +145,13 @@ inline bool _compile(string fc, bool runCompileAfter, char* relativePath)
 {
 
 	lexertk::generator gen(fileManager::compile(fc, false));
+
+	//PRECOMPILER IMPL
+	pre_compile(gen);
+
 	marine::Parser p(gen);
 
+	p.scan_imports(); // scans the top of the file for imports.
 	std::string y = relativePath;
 
 	size_t at = y.find_last_of("/\\");
@@ -154,11 +160,12 @@ inline bool _compile(string fc, bool runCompileAfter, char* relativePath)
 
 	p.setRelativeRunningDirectory(y);
 	p.advance();
-
 	MTimer x("_compile(Ember [beta].cpp)(std::string& x)");
+	x.start_timer();
 	while (p.canAdvance()) {
 		p.parse();
 	}
+	x.stop_timer();
 	std::cout << "\n\n\n";
 	for (auto& x : p.getVariables()) {
 		std::cout << x->str() << std::endl;
@@ -169,7 +176,7 @@ int main(int argc, char* argv[]) {
 	try {
 		_compile(fileManager::readFileIntoString(argv[1]), false, argv[1]);
 	}
-	catch (marine::errors::MError& m) {
+	catch (std::exception& m) {
 		std::string ref("[ERROR] ");
 		ref.append(m.what());
 		marine::out::st_spr(ref, marine::out::STATUS::ERR);

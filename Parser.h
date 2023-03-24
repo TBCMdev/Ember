@@ -51,7 +51,7 @@ namespace marine {
 	protected:
 		void __init_lambda__() {
 
-			Lambda::initialize([=](Lambda* l, std::vector<VContainer>& v) -> VContainer {
+			Lambda::initialize([&](Lambda* l, std::vector<VContainer>& v) -> VContainer {
 				return callLambda(l, v);
 			});
 		}
@@ -73,7 +73,15 @@ namespace marine {
 		void setRelativeRunningDirectory(std::string& x) {
 			m_relative_running_dir = x;
 		}
+		void scan_imports() {
 
+			// [TODO] This will only work if imports are at the VERY top of the file, sometimes this is not the case.
+
+			while (Base::is(getNext(), "use") || Base::is(getNext(), "from")) {
+				advance();
+				_import();
+			}
+		}
 
 		void incDepth() { depth++; }
 		void decDepth() {
@@ -328,6 +336,12 @@ namespace marine {
 			}
 			return false;
 		}
+		bool isBool() {
+			return Base::is(cur(), "true") || Base::is(cur(), "false");
+		}
+		bool isBool(lexertk::token& l) {
+			return Base::is(l, "true") || Base::is(l, "false");
+		}
 		Variable& getVariable(lexertk::token& t) {
 			for (auto& x : getVariables()) {
 				if (x->getName() == t.value)  {
@@ -347,7 +361,7 @@ namespace marine {
 					if (Base::is(gen[i], ")")) br--;
 					if (br == 0) break;
 				}
-				if (br != 0) return false;//throw errors::SyntaxError("expected '(' after function call.");
+				if (br != 0) return false;
 				return true;
 			}
 			return false;
@@ -361,7 +375,7 @@ namespace marine {
 					if (Base::is(gen[i], ")")) br--;
 					if (br == 0) break;
 				}
-				if (br != 0) return false;//throw errors::SyntaxError("expected '(' after function call.");
+				if (br != 0) return false;
 				return true;
 			}
 			return false;
@@ -385,24 +399,29 @@ namespace marine {
 					if (negate_next_node) negate_next_node = false;
 
 					if (!isOp(getNext())) {
-						//std::cout << ("is not op5:" + getNext().value);
 						br = true;
 					}
 
+				}
+				else if (isBool()) {
+					Node n(cur(), Base::Decl::BOOL, negate_next_node);
+					operationStack.push_back(std::make_shared<Node>(n));
+					if (negate_next_node) negate_next_node = false;
+					if (!isOp(getNext())) {
+						br = true;
+					}
 				}
 				else if (isFloat(cur())) {
 					Node n(cur(), Base::Decl::FLOAT, negate_next_node);
 					operationStack.push_back(std::make_shared<Node>(n));
 					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext())) {
-						//std::cout << ("is not op6:" + getNext().value);
 						br = true;
 					}
 
 				}
 				else if (isVariable()) {
 					Variable& v = getVariable(cur());
-					//std::cout << v.str() << "is var" << std::endl;
 					if (!Base::is(getNext(), ".") && !Base::is(getNext(), "[")) {
 						std::shared_ptr<Variable> shared(&v);
 						operationStack.push_back(std::make_shared<VariableNode>(shared, negate_next_node));
@@ -414,7 +433,6 @@ namespace marine {
 					}
 					if (negate_next_node) negate_next_node = false;
 					if (!isOp(getNext())) {
-						//std::cout << ("is not op4:" + getNext().value);
 						br = true;
 					}
 				}
@@ -532,7 +550,7 @@ namespace marine {
 
 						}
 					}
-					else if (isBool(cur())) {
+					else if (isBool()) {
 						if (left == nullptr) {
 							left = new Node(cur(), Base::Decl::BOOL, negate_next_node_recr);
 							if (negate_next_node_recr) negate_next_node_recr = false;
@@ -600,7 +618,13 @@ namespace marine {
 					if (!isOp(getNext())) {
 						br = true;
 					}
-
+				}
+				else if (isBool()) {
+					operationStack.push_back(std::make_shared<Node>(cur(), Base::Decl::BOOL, negate_next_node));
+					if (negate_next_node) negate_next_node = false;
+					if (!isOp(getNext())) {
+						br = true;
+					}
 				}
 				else if (isString(cur())) {
 					operationStack.push_back(std::make_shared<Node>(cur(), Base::Decl::STRING, negate_next_node));
@@ -804,6 +828,13 @@ namespace marine {
 					}
 
 				}
+				else if (isBool(gen[(*i)])) {
+					operationStack.push_back(std::make_shared<Node>(gen[(*i)], Base::Decl::BOOL, negate_next_node));
+					if (negate_next_node) negate_next_node = false;
+					if (!isOp(gen[(*i) + 1])) {
+						br = true;
+					}
+				}
 				else if (isString(gen[(*i)])) {
 					operationStack.push_back(std::make_shared<Node>(gen[(*i)], Base::Decl::STRING, negate_next_node));
 					if (negate_next_node) negate_next_node = false;
@@ -887,7 +918,7 @@ namespace marine {
 			//std::cout << getBefore(2).value << getBefore().value << cur().value << std::endl;
 			Type finalVal{};
 			bool negate_next_node = false;
-
+			// x
 			std::unique_ptr<Node> n = nullptr;
 			Base::Decl determined = Base::Decl::UNKNWN;
 
@@ -898,6 +929,10 @@ namespace marine {
 			else if (isFloat(cur())) {
 				n = std::make_unique<Node>(cur(), Base::Decl::FLOAT, negate_next_node);
 				determined = Base::Decl::FLOAT;
+			}
+			else if (isBool()) {
+				n = std::make_unique<Node>(cur(), Base::Decl::BOOL, negate_next_node);
+				determined = Base::Decl::BOOL;
 			}
 			else if (isString(cur())) {
 				n = std::make_unique<Node>(cur(), Base::Decl::STRING, negate_next_node);
@@ -988,6 +1023,7 @@ namespace marine {
 					else if (isString(cur())) _this.add<String>(String(cur().value), depth, Base::Decl::STRING);
 					else if (isInt(cur())) _this.add<int>(stoi(cur().value), depth, Base::Decl::INT);
 					else if (isFloat(cur())) _this.add <float>(stof(cur().value), depth, Base::Decl::FLOAT);
+					else if (isBool()) _this.add<bool>(stoi(cur().value), depth, Base::Decl::BOOL);
 					else if (isVariable()) {
 						VContainer v = parseVariableUsage();
 						_this.add(v);
@@ -1256,6 +1292,7 @@ namespace marine {
 				else if (isInt(gen[i])) ret.push_back(Base::Decl::INT);
 				else if (isFloat(gen[i])) ret.push_back(Base::Decl::FLOAT);
 				else if (isString(gen[i])) ret.push_back(Base::Decl::STRING);
+				else if (isBool(gen[i])) ret.push_back(Base::Decl::BOOL);
 				else if (isVariable(gen[i])) {
 					Variable& v = getVariable(gen[i]);
 					if (!Base::is(gen[i + 1], ".") && !Base::is(gen[i + 1], "[")) {
@@ -1582,15 +1619,8 @@ namespace marine {
 				auto PredictedParameterTypes = predictParameterInbFuncCallTypes();
 
 
-				inb::Callable* c;
-				c = &inb::getNoIncludeActionByName(name.value,PredictedParameterTypes);
-				if (c->name == "NULL") {
-					//std::cout << "is null";
-					c = &inb::getNoIncludeFunctionByName(name.value, PredictedParameterTypes);
-				}
-				if (c->name == "NULL") {
-					throw marine::errors::SyntaxError("Function does not exist.");
-				}
+				inb::Callable* c = inb::getNoIncludeFunctionByName(name.value, PredictedParameterTypes);
+				if (c == nullptr) throw marine::errors::SyntaxError("Function does not exist.");
 				//check parameters
  				advance();
 				while (canAdvance()) {
@@ -1617,6 +1647,10 @@ namespace marine {
 							case Base::Decl::STRING:
 								parameters.push_back(parseExtParam<String>());
 								allDecls.push_back(Base::Decl::STRING);
+								break;
+							case Base::Decl::BOOL:
+								parameters.push_back(parseExtParam<bool>());
+								allDecls.push_back(Base::Decl::BOOL);
 								break;
 							case Base::Decl::LIST:
 								parameters.push_back(parseExtParam<ArrayList>());
@@ -1652,6 +1686,10 @@ namespace marine {
 								parameters.push_back(std::any_cast<float> (raw));
 								allDecls.push_back(Base::Decl::FLOAT);
 								break;
+							case Base::Decl::BOOL:
+								parameters.push_back(parseExtParam<bool>());
+								allDecls.push_back(Base::Decl::BOOL);
+								break;
 							case Base::Decl::STRING:
 								parameters.push_back(std::any_cast<String> (raw));
 								allDecls.push_back(Base::Decl::STRING);
@@ -1668,7 +1706,6 @@ namespace marine {
 						}
 					}
 					catch (std::exception& ig) {
-						throw ig;
 						throw marine::errors::IndexError("function parameter either does not exist or you have exceeded the amount of parameters the function is asking for.");
 					}
 					advance();

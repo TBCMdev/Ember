@@ -114,6 +114,7 @@ namespace marine {
 		Function(std::string _name, lexertk::token& _start, lexertk::token _end, int start_, int end_, std::vector<Variable> _p) : name(_name), start(_start), end(_end), start_index(start_), end_index(end_), parameters(_p) {
 
 		}
+		Function() {}
 		std::string& getName() { return name; }
 		int getStart() { return start_index; }
 		int getEnd() { return end_index; }
@@ -151,7 +152,13 @@ namespace marine {
 			on_call(this, values);
 		}*/
 	};
+	struct cpp_Lambda : public Function {
+		std::vector<Base::Decl> param_types;
+		cpp_Lambda(std::vector<Base::Decl> param_types) : Function() {
 
+		}
+		~cpp_Lambda() = default;
+	};
 
 	struct EXPRDATA {
 		bool negated;
