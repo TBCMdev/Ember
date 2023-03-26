@@ -7,38 +7,47 @@ C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(78,23): warning C4
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(142,36): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\inb.h(236,27): warning C4101: 's': unreferenced local variable
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\ObjectHandler.h(21,27): warning C4091: 'static ': ignored on left of 'ObjectHandler' when no variable is declared
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\ObjectHandler.h(165,2): warning C4091: 'static ': ignored on left of 'ObjectHandler' when no variable is declared
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\ObjectHandler.h(166,2): warning C4091: 'static ': ignored on left of 'ObjectHandler' when no variable is declared
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(21,1): warning C4005: 'DEBUG': macro redefinition
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(9): message : see previous definition of 'DEBUG'
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(48,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(64,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(214,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(58,1): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(208,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(285,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(291,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(297,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2913,20): warning C4018: '<=': signed/unsigned mismatch
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1431,28): warning C4101: 'ig': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2892,20): warning C4018: '<=': signed/unsigned mismatch
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(93,38): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(192,52): warning C4267: '-=': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(193,42): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(240,9): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(240,9): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
 C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(254,28): warning C4101: 'e': unreferenced local variable
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1708,29): warning C4101: 'ig': unreferenced local variable
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(449): message : see reference to function template instantiation 'Type marine::Parser::parseFuncCall<marine::VContainer>(bool *)' being compiled
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1688,29): warning C4101: 'ig': unreferenced local variable
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(430): message : see reference to function template instantiation 'Type marine::Parser::parseFuncCall<marine::VContainer>(bool *)' being compiled
           with
           [
               Type=marine::VContainer
           ]
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\VContainer.h(33): warning C4715: 'marine::VContainer::VCStr': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1905): warning C4715: 'marine::Parser::parseWhileStatement': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2595): warning C4715: 'marine::Parser::parseForStatement': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2436): warning C4715: 'marine::Parser::parseVariableUsage': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Importer.h(38): warning C4715: 'marine::Importer::importExists': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(691): warning C4715: 'marine::ext::BoolExpr::evaluate': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(1009): warning C4715: 'marine::Parser::parseClassInstantiation': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(354): warning C4172: returning address of local variable or temporary: v
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2264): warning C4715: 'marine::Parser::parseSafeVariableUsage': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Class.h(151): warning C4715: 'marine::ClassHandler::getClassByName': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Variable.h(197): warning C4172: returning address of local variable or temporary: x
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Math.h(594): warning C4715: 'marine::ext::BoolExpr::repr': not all control paths return a value
-C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Parser.h(2789): warning C4715: '`marine::Parser::parseModuleUsage'::`2'::<lambda_1>::operator()': not all control paths return a value
-  Marine [Beta].vcxproj -> C:\Users\krist\source\repos\Marine [Beta]\x64\Debug\Ember [Beta].exe
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\xutility(145,14): error C2672: 'std::construct_at': no matching overloaded function found
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\memory(2006): message : see reference to function template instantiation 'void std::_Construct_in_place<_Ty,std::string&,marine::ClassStructure::MEMBERPROTECTION,bool&>(_Ty &,std::string &,marine::ClassStructure::MEMBERPROTECTION &&,bool &) noexcept(false)' being compiled
+          with
+          [
+              _Ty=marine::ClassStructure::ClassFunction
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\memory(2725): message : see reference to function template instantiation 'std::_Ref_count_obj2<_Ty>::_Ref_count_obj2<std::string&,marine::ClassStructure::MEMBERPROTECTION,bool&>(std::string &,marine::ClassStructure::MEMBERPROTECTION &&,bool &)' being compiled
+          with
+          [
+              _Ty=marine::ClassStructure::ClassFunction
+          ]
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\memory(2726): message : see reference to function template instantiation 'std::_Ref_count_obj2<_Ty>::_Ref_count_obj2<std::string&,marine::ClassStructure::MEMBERPROTECTION,bool&>(std::string &,marine::ClassStructure::MEMBERPROTECTION &&,bool &)' being compiled
+          with
+          [
+              _Ty=marine::ClassStructure::ClassFunction
+          ]
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\precompiler.h(183): message : see reference to function template instantiation 'std::shared_ptr<marine::ClassStructure::ClassFunction> std::make_shared<marine::ClassStructure::ClassFunction,std::string&,marine::ClassStructure::MEMBERPROTECTION,bool&>(std::string &,marine::ClassStructure::MEMBERPROTECTION &&,bool &)' being compiled
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\xutility(145,14): error C2783: '_Ty *std::construct_at(_Ty *const ,_Types &&...) noexcept(<expr>)': could not deduce template argument for '<unnamed-symbol>'
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\xutility(134): message : see declaration of 'std::construct_at'
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\xutility(149,56): error C2664: 'marine::ClassStructure::ClassFunction::ClassFunction(marine::ClassStructure::MEMBERPROTECTION,bool,std::shared_ptr<marine::Function>)': cannot convert argument 1 from 'std::string' to 'marine::ClassStructure::MEMBERPROTECTION'
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.31.31103\include\xutility(149,77): message : No user-defined-conversion operator available that can perform this conversion, or the operator cannot be called
+C:\Users\krist\source\repos\Marine [Beta]\Marine [Beta]\Class.h(33,4): message : see declaration of 'marine::ClassStructure::ClassFunction::ClassFunction'

@@ -49,12 +49,6 @@ namespace marine {
 			//more reloads...
 		}
 	protected:
-		void __init_lambda__() {
-
-			Lambda::initialize([&](Lambda* l, std::vector<VContainer>& v) -> VContainer {
-				return callLambda(l, v);
-			});
-		}
 	public:
 		auto& getVariables() { return scope.getVariables(); }
 		auto& getFunctions() { return scope.getFunctions(); }
@@ -63,11 +57,15 @@ namespace marine {
 			
 			end_range = generator.size();
 			Importer::initialize();
-			__init_lambda__();
+			Lambda::initialize([&](Lambda* l, std::unordered_map<std::string,  VContainer>& v) -> VContainer {
+				return callLambda(l, v);
+				});
 		}
 		Parser(lexertk::generator& generator, unsigned int s_range, unsigned int e_range) : gen(generator), start_range(s_range), end_range(e_range), index(start_range) {
 			Importer::initialize();
-			__init_lambda__();
+			Lambda::initialize([&](Lambda* l, std::unordered_map<std::string, VContainer>& v) -> VContainer {
+				return callLambda(l, v);
+				});
 		}
 #pragma region decl
 		void setRelativeRunningDirectory(std::string& x) {
@@ -77,7 +75,7 @@ namespace marine {
 
 			// [TODO] This will only work if imports are at the VERY top of the file, sometimes this is not the case.
 
-			while (Base::is(getNext(), "use") || Base::is(getNext(), "from")) {
+			while (TCHECK(getNext(), use) || TCHECK(getNext(), from)) {
 				advance();
 				_import();
 			}
@@ -86,14 +84,10 @@ namespace marine {
 		void incDepth() { depth++; }
 		void decDepth() {
 			depth--;
-			std::vector<std::shared_ptr<ValueHolder>>::iterator iter;
 			auto& vars = scope.getVariables();
-			for (iter = vars.begin(); iter != vars.end();) {
-				std::shared_ptr<ValueHolder>& var = *iter._Ptr;
-				if (var->getDepth() > depth) {
-					iter = vars.erase(iter);
-				}
-				else ++iter;
+			for (auto it = vars.begin(); it != vars.end();) {
+				if (it->second->getDepth() > depth) vars.erase(it++);
+				else ++it;
 			}
 		}
 		bool module_isDecl() {
@@ -313,28 +307,15 @@ namespace marine {
 			if(Base::is(getNext(), "(")) return isFuncCall();
 		}
 		bool isVariable() {
-			for (auto& x : getVariables()) {
-				if (x->getName() == cur().value) {
-					////std::cout << "name:" << name << std::endl;
-					return true;
-				}
-				else {
-					//std::cout << "continuing..." << std::endl;
-				}
-			}
-			return false;
+			auto& vars = scope.getVariables();
+
+			return vars.find(cur().value) != vars.end();
+
 		}
 		bool isVariable(lexertk::token& t) {
-			for (auto& x : getVariables()) {
-				if (x->getName() == t.value) {
-					////std::cout << "name:" << name << std::endl;
-					return true;
-				}
-				else {
-					//std::cout << "continuing..." << std::endl;
-				}
-			}
-			return false;
+			auto& vars = scope.getVariables();
+
+			return vars.find(t.value) != vars.end();
 		}
 		bool isBool() {
 			return Base::is(cur(), "true") || Base::is(cur(), "false");
@@ -343,15 +324,15 @@ namespace marine {
 			return Base::is(l, "true") || Base::is(l, "false");
 		}
 		Variable& getVariable(lexertk::token& t) {
-			for (auto& x : getVariables()) {
-				if (x->getName() == t.value)  {
-					return *((Variable*)x.get());
-				}
-			}
-			// add functionality for inb variables. will help a lot with inb lib in ember.
-			std::string n("null");
-			Variable v(n, nullptr, {});
-			return v;
+			return *((Variable*)scope.getVariables().find(t.value)->second.get());
+		}
+		std::pair<std::string, Variable&> getVariable_p() {
+			auto x = scope.getVariables().find(cur().value);
+			return {x->first, *((Variable*)x->second.get()) };
+		}
+		std::pair<std::string, Variable&> getVariable_p(lexertk::token& t) {
+			auto x = scope.getVariables().find(t.value);
+			return { t.value, *((Variable*)x->second.get()) };
 		}
 		bool isFuncCall() {
 			if (Base::is(getNext(), "(")) {
@@ -368,11 +349,11 @@ namespace marine {
 		}
 		bool isFuncCall(int index) {
 			if (index + 2 > gen.size()) return false;
-			if (Base::is(gen[index + 1], "(")) {
+			if (TCHECK(gen[index + 1], lbracket)) {
 				int br = 1;
 				for (int i = index + 2; i < gen.size(); i++) {
-					if (Base::is(gen[i], "(")) br++;
-					if (Base::is(gen[i], ")")) br--;
+					if (TCHECK(gen[i], lbracket)) br++;
+					if (TCHECK(gen[i], rbracket)) br--;
 					if (br == 0) break;
 				}
 				if (br != 0) return false;
@@ -972,7 +953,7 @@ namespace marine {
 			//should only have one node
 			return finalVal;
 		}
-		Variable parseClassInstantiation(std::string& name, std::string& var_name) {
+		Variable parseClassInstantiation(std::string& name) {
 			std::shared_ptr<Class>& c = ClassHandler::getClassByName(name);
 			if (Base::is(getNext(), "new")) {
 				//creating a class variable by constructor
@@ -984,7 +965,7 @@ namespace marine {
 				if (brc > 0) {
 					ClassStructure* structure = c->getStructure();
 					//std::cout << "NAME: " <<c.get()->getName();
-					return parseConstructorCall(structure, c.get(), name, var_name);
+					return parseConstructorCall(structure, c.get(), name);
 				}
 				else {
 					//no parameter constructor, validate that!
@@ -993,7 +974,7 @@ namespace marine {
 			}
 			else {
 				//other ways of creating a class variable
-				if (Base::is(getNext(), "nothing")) return Variable(var_name, nullptr, {});
+				if (TCHECK(getNext(), null)) return Variable(nullptr, {});
 				std::any raw;
 				Base::Decl raw_decl;
 				parseExt<std::any>(Base::Decl::STATIC_OBJECT, &raw, &raw_decl);
@@ -1001,7 +982,7 @@ namespace marine {
 				// maybe function call, assert data types and return variable HERE.
 				if (raw_decl != Base::Decl::STATIC_OBJECT) throw marine::errors::TypeError("Returned type from function does not match the assigned type.");
 
-				Variable v(var_name, raw, {}); // the name is vital!
+				Variable v(raw, {}); // the name is vital!
 				v.setDecl(raw_decl);
 				return v;
 			}
@@ -1100,7 +1081,7 @@ namespace marine {
 			}
 			return _this;
 		}
-		Variable parseDecl(bool push = true) {
+		std::pair<std::string, Variable> parseDecl(bool push = true) {
 			lexertk::token& decl_raw = cur();
 			Base::Decl type = Base::declareParse(cur());
 			if (type == Base::Decl::UNKNWN) {
@@ -1127,35 +1108,35 @@ namespace marine {
 				switch (type) {
 				case Base::Decl::INT: {
 					int val = parseExt<int>();
-					ret = new Variable(decl_name.value, val, std::to_string(val), conf);
+					ret = new Variable(val, std::to_string(val), conf);
 					ret->setDecl(Base::Decl::INT);
 					break;
 				}
 				case Base::Decl::FLOAT: {
 					float val = parseExt<float>(Base::Decl::FLOAT);
-					ret = new Variable(decl_name.value, val, std::to_string(val), conf);
+					ret = new Variable(val, std::to_string(val), conf);
 					ret->setDecl(Base::Decl::FLOAT);
 					break;
 				}
 				case Base::Decl::STRING: {
 					String val = parseExt<String>();
-					ret = new Variable(decl_name.value, val, val.get(), conf);
+					ret = new Variable(val, val.get(), conf);
 					ret->setDecl(Base::Decl::STRING);
 					break;
 				}
 				case Base::Decl::DYNAMIC_OBJECT: {
 					DynamicObject obj = parseDynamicObjectDecl();
 
-					ret = new Variable(decl_name.value, obj, conf, Base::Decl::DYNAMIC_OBJECT);
+					ret = new Variable(obj, conf, Base::Decl::DYNAMIC_OBJECT);
 					break;
 				}
 				case Base::Decl::LIST: {
 					ArrayList list = parseListDecl();
-					ret = new Variable(decl_name.value, list, conf, Base::Decl::LIST);
+					ret = new Variable(list, conf, Base::Decl::LIST);
 					break;
 				}
 				case Base::Decl::STATIC_OBJECT: {
-					Variable v = parseClassInstantiation(decl_raw.value, decl_name.value);
+					Variable v = parseClassInstantiation(decl_raw.value);
 					ret = new Variable(v);
 					ret->setDecl(Base::Decl::STATIC_OBJECT);
 					setDepth = true;
@@ -1163,7 +1144,7 @@ namespace marine {
 				}
 				case Base::Decl::LAMBDA: {
 					Lambda x = parseLambdaDecl();
-					ret = new Variable(decl_name.value, x, conf, Base::Decl::LAMBDA);
+					ret = new Variable(x, conf, Base::Decl::LAMBDA);
 					break;
 				}
 				default: {
@@ -1173,17 +1154,17 @@ namespace marine {
 				if(!setDepth) ret->setDepth(depth);
 				auto x = ObjectHandler::getPrecomiledObject(ret);
 				ret->setObjSelf(&x);
-				if (push) scope.addVariable(*ret);
+				if (push) scope.addVariable(*ret, decl_name.value);
 
-				return *ret;
+				return std::make_pair(decl_name.value, * ret);
 			}
 			else {
 				//lone var with no value
 				advance();
 				Variable ret(decl_name.value, nullptr, conf);
 				ret.setDecl(type);
-				if (push)scope.addVariable(ret);
-				return ret;
+				if (push)scope.addVariable(ret, decl_name.value);
+				return std::make_pair(decl_name.value, ret);
 			}
 
 		}
@@ -1198,7 +1179,7 @@ namespace marine {
 		void resetParserLock() {
 			m_ParserLockKey = -1;
 		}
-		VContainer callLambda(Lambda* l, std::vector<VContainer>& p){
+		VContainer callLambda(Lambda* l, std::unordered_map<std::string, VContainer>& p){
 			while(m_ParserLockKey == 1) {}
 
 			setParserLock(1);
@@ -1231,7 +1212,7 @@ namespace marine {
 
 			int cbrcount = 0;
 			bool foundbr = false;
-			std::vector<Variable> parameters;
+			std::unordered_map<std::string, Variable> parameters;
 			incDepth();
 
 			advance();
@@ -1239,7 +1220,7 @@ namespace marine {
 				if (!Base::is(advance(), ")")) {
 					while (canAdvance()) {
 						advance();
-						parameters.push_back(parseDecl(false));
+						parameters.insert(parseDecl(false));
 						if (Base::is(cur(), ")")) break;
 
 						if (!Base::is(cur(), ",")) throw marine::errors::SyntaxError("invalid symbol after parameter decl.");
@@ -1386,9 +1367,9 @@ namespace marine {
 			}
 			return ret;
 		}
-		Variable parseConstructorCall(ClassStructure* structure, Class* parent, std::string& name, std::string& var_name) {
+		Variable parseConstructorCall(ClassStructure* structure, Class* parent, std::string& name) {
 			std::vector<Base::Decl> allDecls;
-			std::vector<Variable> variables;
+			std::unordered_map<std::string, Variable> variables;
 			std::shared_ptr<Function>& f = structure->constructor->_this;
 			ClassInstance instance = parent->instantiate();
 
@@ -1398,6 +1379,9 @@ namespace marine {
 			int br = 0;
 			int param = 0;
 			int nbr_i = 0;
+
+			auto pbegin = f->parameters.begin();
+
 			while (canAdvance()) {
 				if (Base::is(cur(), "(")) br++;
 				else if (Base::is(cur(), "[")) nbr_i++;
@@ -1412,24 +1396,21 @@ namespace marine {
 				if (f->parameters.size() == 0) { advance(); continue; }
 
 				try {
-					Variable& p = f->parameters[param];
+					Variable& p = pbegin->second;
 					switch (p.getDecl()) {
 					case Base::Decl::INT: {
 						auto ret = parseExtParam<int>();
 						p.setValue(ret);
-						p.setTokenStr(ret);
 						break;
 					}
 					case Base::Decl::FLOAT: {
 						auto ret = parseExtParam<float>(Base::Decl::FLOAT);
 						p.setValue(ret);
-						p.setTokenStr(ret);
 						break;
 					}
 					case Base::Decl::STRING: {
 						String ret = parseExtParam<String>();
 						p.setValue(ret);
-						p.setTokenStr(ret.get());
 						break;
 					}
 					case Base::Decl::LIST: {
@@ -1444,14 +1425,13 @@ namespace marine {
 					}
 					}
 					allDecls.push_back(p.getDecl());
-					variables.push_back(p);
+					variables.insert({pbegin->first, p});
 					//scope.addVariable(p);
 				}
 				catch (std::exception& ig) {
-					throw ig; 
 					throw marine::errors::IndexError("function parameter either does not exist or you have exceeded the amount of parameters the function is asking for.");
 				}
-
+				pbegin++;
 				advance();
 			}
 			//FUNC EXECUTION
@@ -1461,7 +1441,7 @@ namespace marine {
 			scope.setLists(&instance);
 			incDepth();
 			//throw "TESTING";
-			scope.addFunctionParameters(&variables);
+			scope.addFunctionParameters(variables);
 			DEBUG("starting inits...");
 			for (auto& _y : *structure->constructor->initializers) {
 				Variable& id = getVariable(_y.initialized);
@@ -1488,7 +1468,7 @@ namespace marine {
 			decDepth();
 			scope.popStack();
 			setCaret(c);
-			return Variable(var_name, instance, {}, depth);
+			return Variable(instance, {}, depth);
 		}
 		template<typename Type>
 		Type parseFuncCall(bool* return_parent = nullptr) {
@@ -1498,7 +1478,7 @@ namespace marine {
 			int param = 0;
 			std::shared_ptr<Function> f;
 			std::vector<Base::Decl> allDecls = {};
-			std::vector<Variable> variables;
+			std::unordered_map<std::string, Variable> variables;
 
 			if (isVariable(name)){
 				auto& v = getVariable(name);
@@ -1508,8 +1488,8 @@ namespace marine {
 			}
 			else {
 				for (auto& x : scope.getFunctions()) {
-					if (x->getName() == name.value) {
-						f = x; break;
+					if (x.first == name.value) {
+						f = x.second; break;
 					}
 				}
 			}
@@ -1522,6 +1502,8 @@ namespace marine {
 				incDepth();
 				int nbr_i = 0;
 				advance();
+
+				auto vit = f->parameters.begin();
 				while (canAdvance()) {
 					if (Base::is(cur(), "(")) br++;
 					else if (Base::is(cur(), "[")) nbr_i++;
@@ -1536,24 +1518,21 @@ namespace marine {
 					if (f->parameters.size() == 0) { advance(); continue; }
 
 					try {
-						Variable& p = f->parameters[param];
+						Variable& p = vit->second;
 						switch (p.getDecl()) {
 						case Base::Decl::INT: {
 							auto ret = parseExtParam<int>();
 							p.setValue(ret);
-							p.setTokenStr(ret);
 							break;
 						}
 						case Base::Decl::FLOAT: {
 							auto ret = parseExtParam<float>(Base::Decl::FLOAT);
 							p.setValue(ret);
-							p.setTokenStr(ret);
 							break;
 						}
 						case Base::Decl::STRING: {
 							auto ret = parseExtParam<String>();
 							p.setValue(ret);
-							p.setTokenStr(ret.get());
 							break;
 						}
 						case Base::Decl::LAMBDA: {
@@ -1568,14 +1547,15 @@ namespace marine {
 
 						}
 						allDecls.push_back(p.getDecl());
-						variables.push_back(p);
-						scope.addVariable(p);
+						variables.insert(*vit);
+						scope.addVariable(p, vit->first);
 					}
 					catch (std::exception& ig) {
 						throw ig;
 						throw marine::errors::IndexError("function parameter either does not exist or you have exceeded the amount of parameters the function is asking for.");
 					}
 
+					vit++;
 					advance();
 				}
 
@@ -1729,7 +1709,7 @@ namespace marine {
 
 		int cbrcount = 0;
 		bool foundbr = false;
-		std::vector<Variable> parameters;
+		std::unordered_map<std::string, Variable> parameters;
 		incDepth();
 
 		advance();
@@ -1738,7 +1718,7 @@ namespace marine {
 			if (!Base::is(getNext(), ")")) {
 				while (canAdvance()) {
 					advance();
-					parameters.push_back(parseDecl(false));
+					parameters.insert(parseDecl(false));
 					if (Base::is(cur(), ")")) break;
 
 					if (!Base::is(cur(), ",")) throw marine::errors::SyntaxError("invalid symbol after parameter decl.");
@@ -1776,20 +1756,14 @@ namespace marine {
 		if (push) scope.addFunction(func);
 		return func;
 	}
-	bool isComment() {
-		return Base::is(cur(), "#");
-	}
-	bool isCommentBlock() {
-		return Base::is(cur(), "###");
-	}
 	bool isIfStatement() {
-		return Base::is(cur(), "if");
+		return TCHECK(cur(), if);
 	}
 	bool isWhileStatement() {
-		return Base::is(cur(), "while");
+		return TCHECK(cur(), while);
 	}
 	bool isForStatement() {
-		return Base::is(cur(), "for");
+		return TCHECK(cur(), for);
 	}
 	BoolExpr* parseLogicalExpr() {
 		int brc = 1;
@@ -1933,12 +1907,13 @@ namespace marine {
 		int param = 0;
 
 		incDepth();
-		std::vector<Variable> variables;
+		std::unordered_map<std::string, Variable> variables;
 		std::vector<Base::Decl> allDecls;
 
 		int nbr_i = 0;
 
 
+		auto vit = variables.begin();
 		advance();
 		while (canAdvance()) {
 			if (Base::is(cur(), "(")) br++;
@@ -1954,24 +1929,21 @@ namespace marine {
 			if (f->parameters.size() == 0) { advance(); continue; }
 
 			try {
-				Variable& p = f->parameters[param];
+				Variable& p = vit->second;
 				switch (p.getDecl()) {
 				case Base::Decl::INT: {
 					auto ret = parseExtParam<int>();
 					p.setValue(ret);
-					p.setTokenStr(ret);
 					break;
 				}
 				case Base::Decl::FLOAT: {
 					auto ret = parseExtParam<float>(Base::Decl::FLOAT);
 					p.setValue(ret);
-					p.setTokenStr(ret);
 					break;
 				}
 				case Base::Decl::STRING: {
 					auto ret = parseExtParam<String>();
 					p.setValue(ret);
-					p.setTokenStr(ret.get());
 					break;
 				}
 				case Base::Decl::LAMBDA: {
@@ -1983,18 +1955,19 @@ namespace marine {
 				}
 				}
 				allDecls.push_back(p.getDecl());
-				variables.push_back(p);
-				scope.addVariable(p);
+				variables.insert({vit->first, vit->second});
+				scope.addVariable(p, vit->first);
 			}
 			catch (std::exception& ig) {
 				throw ig;
 				throw marine::errors::IndexError("function parameter either does not exist or you have exceeded the amount of parameters the function is asking for.");
 			}
 
+			vit++;
 			advance();
 		}
 		scope.setLists(structure);
-		for (auto& x : variables) scope.addVariable(x);
+		for (auto& x : variables) scope.addVariable(x.second, x.first);
 		//FUNC EXECUTION
 		advance();
 
@@ -2151,8 +2124,11 @@ namespace marine {
 		return (Base::is(getNext(), "."));
 	}
 	VContainer parseSafeVariableUsage() {
-		Variable* v = &getVariable(cur());
-		if (v->getName() == "NULL") throw marine::errors::SyntaxError("unknown token");
+		auto pair = getVariable_p(cur());
+
+		std::string& name = pair.first;
+		Variable* v = &pair.second;
+		if (name == "NULL") throw marine::errors::SyntaxError("unknown token"); //redundant?
 		if (isOp(getNext())) {
 			Operator op(advance());
 			switch (v->getDecl()) {
@@ -2263,8 +2239,11 @@ namespace marine {
 
 	}
 	VContainer parseVariableUsage() {
-		Variable* v = &getVariable(cur());
-		if (v->getName() == "NULL") throw marine::errors::SyntaxError("unknown token.");
+		auto pair = getVariable_p(cur());
+
+		std::string& name = pair.first;
+		Variable* v = &pair.second;
+		if (name == "NULL") throw marine::errors::SyntaxError("unknown token.");
 		if (isOp(getNext())) {
 			Operator op(advance());
 			switch(v->getDecl()){
@@ -2531,7 +2510,7 @@ namespace marine {
 		else {
 			Base::Decl conv = Base::declareParse(advance());
 			lexertk::token& t = advance();
-			Variable iter(t.value, nullptr, cur(), {});
+			Variable iter(nullptr, cur(), {});
 			iter.setDecl(conv);
 			std::any res;
 			Base::Decl resDecl;
@@ -2562,7 +2541,7 @@ namespace marine {
 					}
 					incDepth();
 					iter.setDepth(depth);
-					scope.addVariable(iter);
+					scope.addVariable(iter, t.value);
 					Variable* insertedIter = &getVariable(t);
 					while (_iter < x.length()) {
 						VContainer z = x.get(_iter);
@@ -2604,10 +2583,10 @@ namespace marine {
 		int cbrcount = 0;
 		bool foundbr = false;
 
-		std::vector<Variable> parameters;
+		std::unordered_map<std::string, Variable> parameters;
 		while (canAdvance()) {
 			advance();
-			parameters.push_back(parseDecl(false));
+			parameters.insert(parseDecl(false));
 
 			if (Base::is(cur(), ")")) break;
 
@@ -2621,7 +2600,7 @@ namespace marine {
 			do {
 				lexertk::token& initialized = advance();
 				for (auto& z : parameters) {
-					if (z.getName() == cur().value) throw marine::errors::SyntaxError("cannot initialize parameter variable in constructor. try changing the name of your class members, so that they are not the same as the constructor parameters.");
+					if (z.first == cur().value) throw marine::errors::SyntaxError("cannot initialize parameter variable in constructor. try changing the name of your class members, so that they are not the same as the constructor parameters.");
 				}
 				if (!Base::is(advance(), "(")) throw marine::errors::SyntaxError("expected '(' after class member smart initialization. usage: func([TYPE] t) => member(t) {}");
 				lexertk::token& initalizer = advance();
@@ -2692,14 +2671,14 @@ namespace marine {
 				_obj.setConstructor(construct);
 			}
 			else if (isDecl()) {
-				Variable x = parseDecl(false);
-				ClassStructure::ClassVariable var(x.getName(), (ClassStructure::MEMBERPROTECTION)curProtType, x.getDecl(), std::make_shared<Variable>(x));
-				_obj.addNewVariable(var);
+				auto x = parseDecl(false);
+				ClassStructure::ClassVariable var((ClassStructure::MEMBERPROTECTION)curProtType, x.second.getDecl(), std::make_shared<Variable>(x.second));
+				_obj.addNewVariable(var, x.first);
 			}
 			else if (isFuncDecl()) {
 				Function func = skipFuncDecl(false);
-				ClassStructure::ClassFunction function(func.getName(), (ClassStructure::MEMBERPROTECTION)curProtType, false, std::make_shared<Function>(func));
-				_obj.addFunction(function);
+				ClassStructure::ClassFunction function((ClassStructure::MEMBERPROTECTION)curProtType, false, std::make_shared<Function>(func));
+				_obj.addFunction(function, func.getName());
 			}
 		}
 		DEBUG(cur().value);
@@ -2815,13 +2794,13 @@ namespace marine {
 			}
 
 		}
-		else if (Base::is(cur(), "use") || Base::is(cur(), "from")) {
+		else if (TCHECK(cur(), use) || TCHECK(cur(), from)) {
 			_import();
 		}
-		else if (Base::is(cur(), "class")) {
+		else if (TCHECK(cur(), class)) {
 			parseClassObject();
 		}
-		else if (Base::is(cur(), "module")) {
+		else if (TCHECK(cur(), module)) {
 			parseModule();
 		}
 		else if (isForStatement()) {

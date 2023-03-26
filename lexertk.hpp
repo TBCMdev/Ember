@@ -54,9 +54,14 @@
 #include <stdexcept>
 #include <string>
 
+
+#define TOK(name) lexertk::token::token_type::name
+#define TENTRY(tok) {#tok, lexertk::token::token_type::e_##tok}
+
+#define TCHECK(tok, ch) tok.type == lexertk::token::token_type::e_##ch
+
 namespace lexertk
 {
-
     namespace details
     {
 
@@ -239,7 +244,40 @@ namespace lexertk
             e_rsqrbracket = ']', e_lsqrbracket = '[', e_rcrlbracket = '}',
             e_lcrlbracket = '{', e_comma = ',', e_add = '+',
             e_sub = '-', e_div = '/', e_mul = '*',
-            e_mod = '%', e_pow = '^', e_colon = ':'
+            e_mod = '%', e_pow = '^', e_colon = ':',
+
+            e_type,
+            e_method,
+            e_while,
+            e_for,
+            e_continue,
+            e_break,
+            e_return,
+
+            e_call,
+            
+            e_use,
+            e_from,
+            e_export,
+            e_new,
+            e_if,
+            e_elif,
+            e_else,
+            e_try,
+            e_except,
+            e_anyway,
+
+            e_template,
+            e_module,
+
+            e_class,
+
+            e_true,
+            e_false,
+            e_null,
+
+            e_s_comment,
+            e_l_comment
         };
 
         token()
@@ -381,6 +419,39 @@ namespace lexertk
         std::size_t position;
     };
 
+    const std::map<std::string, token::token_type> kw_list
+    {
+        TENTRY(type),
+        TENTRY(method),
+        TENTRY(while),
+        TENTRY(for),
+        TENTRY(continue),
+        TENTRY(break),
+        TENTRY(return),
+
+        TENTRY(call),
+
+        TENTRY(use),
+        TENTRY(from),
+        TENTRY(export),
+        TENTRY(new),
+        TENTRY(if),
+        TENTRY(elif),
+        TENTRY(else),
+        TENTRY(try),
+        TENTRY(except),
+        TENTRY(anyway),
+
+        TENTRY(template),
+        TENTRY(module),
+        TENTRY(class),
+        TENTRY(s_comment),
+        TENTRY(l_comment),
+
+        TENTRY(true),
+        TENTRY(false),
+        TENTRY(null)
+    };
     class generator
     {
     public:
@@ -682,7 +753,14 @@ namespace lexertk
 
             ++s_itr_;
         }
+        inline token::token_type scan_keyword(const std::string& c) {
 
+            auto x = kw_list.find(c);
+
+            if (x != kw_list.end()) return x->second;
+
+            return token::token_type::e_none;
+        }
         inline void scan_symbol()
         {
             const char* begin = s_itr_;
@@ -693,8 +771,15 @@ namespace lexertk
             {
                 ++s_itr_;
             }
+
+
             token_t t;
+            
+
             t.set_symbol(begin, s_itr_, base_itr_);
+            std::string x(begin, s_itr_);
+            t.type = scan_keyword(x);
+
             token_list_.push_back(t);
         }
 

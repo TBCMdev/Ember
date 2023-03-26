@@ -110,8 +110,8 @@ namespace marine {
 		lexertk::token start, end;
 		int start_index, end_index;
 	public:
-		std::vector<Variable> parameters;
-		Function(std::string _name, lexertk::token& _start, lexertk::token _end, int start_, int end_, std::vector<Variable> _p) : name(_name), start(_start), end(_end), start_index(start_), end_index(end_), parameters(_p) {
+		std::unordered_map<std::string, Variable> parameters;
+		Function(std::string _name, lexertk::token& _start, lexertk::token _end, int start_, int end_, std::unordered_map<std::string, Variable> _p) : name(_name), start(_start), end(_end), start_index(start_), end_index(end_), parameters(_p) {
 
 		}
 		Function() {}
@@ -121,9 +121,6 @@ namespace marine {
 		std::string str() {
 			std::stringstream s("(MANUAL FUNCTION) name:");
 			s << name << ", start token:" << start.value << ", end token:" << end.value << ", variables from parameters:";
-			for (auto& x : parameters) {
-				s << x.str() << "\n";
-			}
 			return s.str();
 		}
 		virtual ~Function() = default;
@@ -131,20 +128,20 @@ namespace marine {
 	class Lambda;
 
 
-	std::function<VContainer(Lambda*, std::vector<VContainer>&)> _LAMBDA_ON_CALL = nullptr;
+	std::function<VContainer(Lambda*, std::unordered_map<std::string, VContainer>&)> _LAMBDA_ON_CALL = nullptr;
 
 	class Lambda : public Function {
 	public:
-		static VContainer callFromCPP(Lambda* l, std::vector<VContainer> args) {
+		static VContainer callFromCPP(Lambda* l, std::unordered_map<std::string, VContainer> args) {
 			if (_LAMBDA_ON_CALL != nullptr)
 				return _LAMBDA_ON_CALL(l, args);
 
 			return VContainer::null();
 		}
-		static void initialize(std::function<VContainer(Lambda*, std::vector<VContainer>&)> l) {
+		static void initialize(std::function<VContainer(Lambda*, std::unordered_map<std::string, VContainer>&)> l) {
 			_LAMBDA_ON_CALL = l;
 		}
-		Lambda(lexertk::token& start, lexertk::token _end, int start_, int end_, std::vector<Variable> _p) : Function("", start, _end, start_, end_, _p) {
+		Lambda(lexertk::token& start, lexertk::token _end, int start_, int end_, std::unordered_map<std::string, Variable> _p) : Function("", start, _end, start_, end_, _p) {
 
 		}
 		~Lambda() = default;

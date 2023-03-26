@@ -180,7 +180,7 @@ _PRECOMPILE_INFO pre_compile(lexertk::generator& generator)
                                 {
                                     // parse parameters, and make:
                                     cpp_Lambda function({});
-                                    structure.members.push_back(std::make_shared<ClassStructure::ClassFunction>(name, ClassStructure::MEMBERPROTECTION::PUBLIC, constructor));
+                                    structure.members.insert({ name, std::make_shared<ClassStructure::ClassFunction>(name, ClassStructure::MEMBERPROTECTION::PUBLIC, constructor) });
                                 }
                                 //else structure.members.push_back(std::make_shared<ClassStructure::ClassVariable>(name, ClassStructure::MEMBERPROTECTION::PUBLIC, Base::Decl));
                             }

@@ -11,8 +11,8 @@ namespace marine {
 	class Module {
 	protected:
 		//[TODO] POP_STACK, SETTING LISTS FOR CLASS INSTANCE IN SCOPE CLASS
-		using V_Var = std::vector<std::shared_ptr<ValueHolder>>;
-		using F_Var = std::vector<std::shared_ptr<Function>>;
+		using V_Var = std::unordered_map<std::string, std::shared_ptr<ValueHolder>>;
+		using F_Var = std::unordered_map<std::string, std::shared_ptr<Function>>;
 		V_Var var_stack;
 		F_Var func_stack;
 

@@ -13,27 +13,25 @@ namespace marine {
 			INTERNAL
 		};
 		struct ClassMember {
-			std::string name;
 			MEMBERPROTECTION protection;
 			bool var = true;
-			ClassMember(std::string& n, MEMBERPROTECTION prot, bool isvar = true): name(n), protection(prot), var(isvar){
+			ClassMember(MEMBERPROTECTION prot, bool isvar = true): protection(prot), var(isvar){
 			}
 		};
 		struct ClassVariable : public ClassMember {
 			Base::Decl decl;
 			std::shared_ptr<marine::Variable> defaultedValue = nullptr;
-			ClassVariable(std::string n, MEMBERPROTECTION p, Base::Decl d, std::shared_ptr<marine::Variable> def = nullptr)
-				: ClassMember(n,p), decl(d), defaultedValue(def) {
+			ClassVariable(MEMBERPROTECTION p, Base::Decl d, std::shared_ptr<marine::Variable> def = nullptr)
+				: ClassMember(p), decl(d), defaultedValue(def) {
 			
-				if (defaultedValue != nullptr) defaultedValue->setName(n);
 
 			}
 		};
 		struct ClassFunction : public ClassMember {
 			bool constructor = false;
 			std::shared_ptr<marine::Function> _this = nullptr;
-			ClassFunction(std::string n, MEMBERPROTECTION p, bool c, std::shared_ptr<marine::Function> def = nullptr)
-				: ClassMember(n, p, false), constructor(c), _this(def) {
+			ClassFunction(MEMBERPROTECTION p, bool c, std::shared_ptr<marine::Function> def = nullptr)
+				: ClassMember(p, false), constructor(c), _this(def) {
 			
 			}
 		};
@@ -49,14 +47,14 @@ namespace marine {
 			typedef std::shared_ptr<std::vector<Initializer>> InitializerList;
 			InitializerList initializers;
 			ClassConstructor(MEMBERPROTECTION p = MEMBERPROTECTION::PUBLIC, std::vector<Initializer>* i = nullptr, std::shared_ptr<marine::Function> def = nullptr)
-				: ClassFunction{ "", p, true, def }, initializers(std::make_shared<std::vector<Initializer>>(*i)) {}
+				: ClassFunction{p, true, def }, initializers(std::make_shared<std::vector<Initializer>>(*i)) {}
 		};
-		std::vector<std::shared_ptr<ClassMember>> members;
+		std::unordered_map<std::string, std::shared_ptr<ClassMember>> members;
 		std::shared_ptr<ClassConstructor> constructor = nullptr;
 
 	};
 	class ClassInstance {
-		typedef std::vector<std::shared_ptr<ClassStructure::ClassMember>> MemberList;
+		typedef std::unordered_map<std::string, std::shared_ptr<ClassStructure::ClassMember>> MemberList;
 	private:
 		MemberList members;
 	public:
@@ -69,15 +67,15 @@ namespace marine {
 			return &members;
 		}
 		ClassStructure::ClassFunction* getFunction(std::string& s) {
-			for (auto& x : members) {
-				if (x->name == s) return (ClassStructure::ClassFunction*)x.get();
-			}
+			auto f = members.find(s);
+
+			if (f != members.end()) return (ClassStructure::ClassFunction*)f->second.get();
 			return nullptr;
 		}
 		ClassStructure::ClassVariable* getVariable(std::string& s) {
-			for (auto& x : members) {
-				if (x->name == s) return (ClassStructure::ClassVariable*)x.get();
-			}
+			auto f = members.find(s);
+
+			if (f != members.end()) return (ClassStructure::ClassVariable*)f->second.get();
 			return nullptr;
 		}
 	};
@@ -92,11 +90,11 @@ namespace marine {
 			return ClassInstance(structure.members);
 		}
 
-		void addNewVariable(ClassStructure::ClassVariable& v) {
-			structure.members.push_back(std::make_shared<ClassStructure::ClassVariable>(v));
+		void addNewVariable(ClassStructure::ClassVariable& v, const std::string& s) {
+			structure.members.insert({ s, std::make_shared<ClassStructure::ClassVariable>(v) });
 		}
-		void addFunction(ClassStructure::ClassFunction& f) {
-			structure.members.push_back(std::make_shared<ClassStructure::ClassFunction>(f));
+		void addFunction(ClassStructure::ClassFunction& f, const std::string& s) {
+			structure.members.insert({ s,std::make_shared<ClassStructure::ClassFunction>(f) });
 		}
 		void setConstructor(ClassStructure::ClassConstructor& c) {
 			structure.constructor = std::make_shared<ClassStructure::ClassConstructor>(c);
@@ -111,23 +109,20 @@ namespace marine {
 			return name;
 		}
 		bool hasMember(const char* name) {
-			for (const auto& x : structure.members) {
-				if (x->name == name) return true;
-			}
-			return false;
+			return structure.members.find(std::string(name)) != structure.members.end();
 		}
 		ClassStructure::ClassVariable* getVariable(const char* name) {
-			for (const auto& x : structure.members) {
-				auto* y = x.get();
-				if (x->name == name) return (ClassStructure::ClassVariable*)x.get();
-			}
+			auto f = structure.members.find(std::string(name));
+
+			if (f != structure.members.end()) return (ClassStructure::ClassVariable*)f->second.get();
+
 			return nullptr;
 		}
 		ClassStructure::ClassFunction* getFunction(const char* name) {
-			for (const auto& x : structure.members) {
-				auto* y = x.get();
-				if (x->name == name) return (ClassStructure::ClassFunction*)x.get();
-			}
+			auto f = structure.members.find(std::string(name));
+
+			if (f != structure.members.end()) return (ClassStructure::ClassFunction*)f->second.get();
+
 			return nullptr;
 		}
 

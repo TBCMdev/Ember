@@ -8,62 +8,49 @@
 #include "Base.h"
 #include "VContainer.h"
 #include "ValueHolder.h"
+
 namespace marine {
 	class StaticObject;
 	class Variable : public ValueHolder {
 	protected:
-		std::string name;
 		lexertk::token orig;
 	public:
-		Variable(std::string& _name, std::any val, lexertk::token& _orig, std::vector <Base::DeclConfig> _configs) : orig(_orig), ValueHolder(val), name(_name)
+		Variable(std::any val, lexertk::token& _orig, std::vector <Base::DeclConfig> _configs) : orig(_orig), ValueHolder(val)
 		{
 			configs = _configs;
-			setName(_name);
 		}
-		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs, Base::Decl d) :ValueHolder(val), name(_name)
+		Variable(std::any val, std::vector <Base::DeclConfig> _configs, Base::Decl d) :ValueHolder(val)
 		{
 			__hasToken = false;
 			configs = _configs;
 			decl = d;
-			setName(_name);
 		}
-		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs) :ValueHolder(val), name(_name)
+		Variable(std::any val, std::vector <Base::DeclConfig> _configs) :ValueHolder(val)
 		{
 			__hasToken = false;
 			configs = _configs;
-			setName(_name);
 		}
-		Variable(std::string& _name, std::any val, std::vector <Base::DeclConfig> _configs, int depth) :ValueHolder(val), name(_name)
+		Variable(std::any val, std::vector <Base::DeclConfig> _configs, int depth) :ValueHolder(val)
 		{
 			__hasToken = false;
 			configs = _configs;
-			setName(_name);
 			__depth = depth;
 		}
-		Variable(std::string& _name, std::any val, std::string _origStr, std::vector <Base::DeclConfig> _configs) : orig(_origStr), ValueHolder(val), name(_name)
+		Variable(std::any val, std::string _origStr, std::vector <Base::DeclConfig> _configs) : orig(_origStr), ValueHolder(val)
 		{
 			__hasToken = false;
 			configs = _configs;
-			setName(_name);
 		}
 		Variable(std::any val) : ValueHolder(val)
 		{
 			__hasToken = false;
 			std::string null = "";
-			setName(null);
 		}
 		void setToken(lexertk::token& t) { orig = t; };
 		void loseStringTrace() { orig = lexertk::token("UNTRACABLE"); }
-		template <typename T>
-		void setTokenStr(T s) {
-			std::stringstream y;
-			y << s;
-			orig = lexertk::token(y.str());
-		}
-		std::string getName() { return name; }
 		lexertk::token& getToken() { return orig; }
 		virtual std::string str() override {
-			return std::string("[var] name: " + name + ", val=" + orig.value + ", decl_type: " + Base::declStr(decl) + ", configurations: " + configsStr());
+			return std::string("(variable) val=" + orig.value + ", decl_type: " + Base::declStr(decl));
 		}
 		~Variable() = default;
 	};
@@ -82,11 +69,10 @@ namespace marine {
 
 
 	struct ObjectCallable {
-		std::string name;
 		bool returnable;
 		std::vector<Base::Decl> paramTypes;
 		Base::Decl returnType = Base::Decl::UNKNWN;
-		ObjectCallable(const char* n, bool r, std::vector < Base::Decl> types,Base::Decl* ret = nullptr) : name(n), returnable(r), paramTypes(types) 
+		ObjectCallable(bool r, std::vector < Base::Decl> types,Base::Decl* ret = nullptr) : returnable(r), paramTypes(types) 
 		{
 			if (ret != nullptr) {
 				returnType = *ret;
@@ -105,7 +91,7 @@ namespace marine {
 	struct ObjectFunction : public ObjectCallable {
 		LFunction c;
 	public:
-		ObjectFunction(const char* name, Base::Decl returnType, LFunction a, std::vector<Base::Decl> types) : ObjectCallable(name, false, types, &returnType), c(a) {}
+		ObjectFunction(Base::Decl returnType, LFunction a, std::vector<Base::Decl> types) : ObjectCallable(false, types, &returnType), c(a) {}
 		void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr, std::vector<Base::Decl>* x = nullptr) override {
 			*v = c(a, _this, x);
 		}
@@ -115,7 +101,7 @@ namespace marine {
 	struct ObjectCommand : public ObjectCallable {
 		LAction c;
 	public:
-		ObjectCommand(const char* name, LAction a, std::vector<Base::Decl> types) : ObjectCallable(name, false, types), c(a) {
+		ObjectCommand(LAction a, std::vector<Base::Decl> types) : ObjectCallable(false, types), c(a) {
 		}
 		void call(std::vector<std::any>& a, ValueHolder* _this, marine::VContainer* v = nullptr, std::vector<Base::Decl>* x = nullptr) override {
 			c(a, _this, x);
@@ -165,8 +151,8 @@ namespace marine {
 	class StaticObject{
 	protected:
 		std::string name;
-		std::vector <std::shared_ptr<ObjectCallable>> functions{};
-		std::vector<ObjectVariable> variables;
+		std::unordered_map<std::string, std::shared_ptr<ObjectCallable>> functions{};
+		std::unordered_map<std::string, ObjectVariable> variables;
 		ObjectInheritor handler;
 	public:
 
@@ -176,38 +162,34 @@ namespace marine {
 		StaticObject(std::string n, ObjectInheritor* inheritorHandler = nullptr) : name(n) {
 			if (inheritorHandler != nullptr) handler = *inheritorHandler;
 		}
-		StaticObject(std::string n, std::vector<ObjectCommand> commands, std::vector<ObjectFunction> funcs, std::vector<ObjectVariable> members) : name(n), variables(members) {
+		StaticObject(std::string n, std::unordered_map<std::string, ObjectCommand> commands, std::unordered_map<std::string, ObjectFunction> funcs, std::unordered_map<std::string, ObjectVariable> members) : name(n), variables(members) {
 
 			for (auto& x : commands) {
-				functions.push_back(std::make_shared<ObjectCommand>(x));
+				functions.insert({ x.first, std::make_shared<ObjectCommand>(x.second) });
 			}
 			for (auto& x : funcs) {
-				functions.push_back(std::make_shared<ObjectFunction>(x));
+				functions.insert({ x.first, std::make_shared<ObjectFunction>(x.second) });
 			}
 		}
 		std::string getName() { return name; }
 		bool hasVariable(std::string n) {
-			for (auto x : variables) {
-				if (x.getUnprotected()->getName() == n) return true;
-			}
-			return false;
+			return variables.find(n) != variables.end();
 		}
 		ObjectVariable* getVariable(std::string n) {
-			for (auto x : variables) {
-				if (x.getUnprotected()->getName() == n) return &x;
-			}
+			auto f = variables.find(n);
+
+			if (f != variables.end()) return &f->second;
+
 			return nullptr;
 		}
 		bool hasFunction(std::string n) {
-			for (auto& x : functions) {
-				if (x->name == n) return true;
-			}
-			return false;
+			return functions.find(n) != functions.end();
 		}
 		ObjectCallable* getFunction(std::string n) {
-			for (auto& x : functions) {
-				if (x->name == n) return x.get();
-			}
+			auto f = functions.find(n);
+
+			if (f != functions.end()) return f->second.get();
+
 			return nullptr;
 		}
 	};

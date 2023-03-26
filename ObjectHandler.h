@@ -33,13 +33,13 @@ public:
 		},
 		{
 			//FUNCTIONS
-			{
-				"toString",Base::Decl::STRING, STATIC_OBJ_FUNC
+			{"toString", {
+				Base::Decl::STRING, STATIC_OBJ_FUNC
 				{
 					return VContainer(String(std::to_string(self->cast<int>())), -1, Base::Decl::STRING);
 				}, {}
-			},
-			{"digits",Base::Decl::INT,  STATIC_OBJ_FUNC
+			}},
+				{"digits", {Base::Decl::INT,  STATIC_OBJ_FUNC
 				{
 					int i = 1;
 					int c = 0;
@@ -49,7 +49,7 @@ public:
 					std::cout << "num of digits:" << c << std::endl;
 					return VContainer(i, -1, Base::Decl::INT);
 				}, {}
-			}
+			}}
 		},
 		{
 			//MEMBERS
@@ -59,23 +59,24 @@ public:
 		},
 		 {
 			 //FUNCTIONS
-			  {"replace",Base::Decl::STRING, STATIC_OBJ_FUNC{
+			 {"replace",{Base::Decl::STRING, STATIC_OBJ_FUNC{
 				 auto [str, rep] = cast<String,String>(a);
 
 				 std::string x = std::regex_replace(self->cast<String>().get(), std::regex(str.get()), rep.get());
 				 return makeContainer(String::noTrim(x), Base::Decl::STRING);
-			  }, {Base::Decl::STRING, Base::Decl::STRING}},
-			  {"length",Base::Decl::INT, STATIC_OBJ_FUNC{
+			  }, {Base::Decl::STRING, Base::Decl::STRING}}
+			 },
+			  {"length",{Base::Decl::INT, STATIC_OBJ_FUNC{
 				 return makeContainer(self->cast<String>().get().length(), Base::Decl::INT);
-				}, {}},
-			  {"toLower",Base::Decl::STRING, STATIC_OBJ_FUNC{
+				}, {}}},
+				{"toLower", {Base::Decl::STRING, STATIC_OBJ_FUNC{
 				 std::string copy = self->cast<String>().getCopy();
 
 				 std::transform(copy.begin(), copy.end(),copy.begin(), [](unsigned char c) { return std::tolower(c); });
 				 return makeContainer(String::noTrim(copy), Base::Decl::STRING);
 
-				}, {}},
-			  {"at",Base::Decl::STRING, STATIC_OBJ_FUNC{
+				}, {}}},
+				{"at",{Base::Decl::STRING, STATIC_OBJ_FUNC{
 				auto [i] = cast<int>(a);
 				auto x = self->cast<String>().get();
 				if (i < 0) {
@@ -84,8 +85,8 @@ public:
 
 				 return makeContainer(String::noTrim(std::string(1, x[i])), Base::Decl::STRING);
 
-				}, {Base::Decl::INT}},
-				{"endsWith",Base::Decl::BOOL, STATIC_OBJ_FUNC{
+				}, {Base::Decl::INT}}},
+				{"endsWith", {Base::Decl::BOOL, STATIC_OBJ_FUNC{
 
 					bool ret = false;
 					auto x = self->cast<String>().get();
@@ -96,7 +97,7 @@ public:
 
 					return makeContainer(ret, Base::Decl::BOOL);
 
-				}, {}}
+				}, {}}}
 
 			},
 			 {
@@ -104,21 +105,21 @@ public:
 			}), StaticObject("list",
 				{
 					//COMMANDS
-					{"add", STATIC_OBJ_ACTION{
+					{"add",{STATIC_OBJ_ACTION{
 						ArrayList & _this = self->castRef<ArrayList>();
 						std::any& x = a[0];
 						_this.add(x, -1, (*help)[0]);
 
 					}
-						
-					, {Base::Decl::RUNTIME_DECIDED}}
+
+					, {Base::Decl::RUNTIME_DECIDED}}}
 				},
 				{
 					//FUNCS
-					{"length", Base::Decl::INT, STATIC_OBJ_FUNC{
+					{"length", {Base::Decl::INT, STATIC_OBJ_FUNC{
 						ArrayList _this = self->cast<ArrayList>();
 						return makeContainer(_this.length(), Base::Decl::INT);
-					}, {}}
+					}, {}}}
 				},
 				{
 					//MEMBERS

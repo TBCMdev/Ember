@@ -152,6 +152,7 @@ inline bool _compile(string fc, bool runCompileAfter, char* relativePath)
 	marine::Parser p(gen);
 
 	p.scan_imports(); // scans the top of the file for imports.
+
 	std::string y = relativePath;
 
 	size_t at = y.find_last_of("/\\");
@@ -167,9 +168,6 @@ inline bool _compile(string fc, bool runCompileAfter, char* relativePath)
 	}
 	x.stop_timer();
 	std::cout << "\n\n\n";
-	for (auto& x : p.getVariables()) {
-		std::cout << x->str() << std::endl;
-	}
 	return true;
 }
 int main(int argc, char* argv[]) {
